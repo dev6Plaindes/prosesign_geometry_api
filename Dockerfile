@@ -11,8 +11,14 @@ ENV PYTHONUNBUFFERED 1
 # Instalamos las dependencias del sistema necesarias (si las hubiera)
 # En este caso, limpiamos la caché para mantener la imagen pequeña
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    libgdal-dev \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
+
+ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
+ENV C_INCLUDE_PATH=/usr/include/gdal
 
 # Copiamos primero solo el archivo de requerimientos para aprovechar la caché de Docker
 COPY requirements.txt .
