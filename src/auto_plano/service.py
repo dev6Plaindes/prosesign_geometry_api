@@ -11,17 +11,22 @@ from affine import Affine
 from src.auto_plano.zona import Zona
 import pandas as pd
 
-# Tus datos de entrada
-aforo = {
-    "aforoInicial": 20,
-    "aulaInicial": 2,
-    "aforoPrimaria": 20,
-    "aulaPrimaria": 6,
-    "aforoSecundaria": 10,
-    "aulaSecundaria": 5
-}
+import gspread
+import pandas as pd
+from google.oauth2.service_account import Credentials
+import time
 
-archivo = "plantilla.xlsx"
+# Tus datos de entrada
+# aforo = {
+#     "aforoInicial": 20,
+#     "aulaInicial": 2,
+#     "aforoPrimaria": 20,
+#     "aulaPrimaria": 6,
+#     "aforoSecundaria": 10,
+#     "aulaSecundaria": 5
+# }
+
+# archivo = "plantilla.xlsx"
 
 def procesar_excel_real(datos, ruta_archivo):
     # 1. Iniciar Excel (visible=False para que no salte la ventana)
@@ -127,6 +132,95 @@ def extraer_df_calculos(ruta_archivo, nombre_hoja="CALCULOS"):
         print(f"❌ Ocurrió un error al procesar el Excel: {e}")
         return None
 
+
+def conectar_google_sheets(ruta_json, nombre_sheet):
+    """Establece la conexión con la cuenta de servicio."""
+    scopes = [
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive'
+    ]
+    creds = Credentials.from_service_account_file(ruta_json, scopes=scopes)
+    gc = gspread.authorize(creds)
+    return gc.open(nombre_sheet)
+
+def procesar_y_extraer_sheets(datos, nombre_archivo_google):
+    ruta_json = './hip-service-491917-s6-4e534bb75127.json'
+    
+    try:
+        sh = conectar_google_sheets(ruta_json, nombre_archivo_google)
+        
+        # --- 1. ACTUALIZACIÓN (INICIAL, PRIM, SEC) ---
+        # (Mantén tu lógica de update_acell y update que ya funcionaba)
+        ws_inicial = sh.worksheet("INICIAL")
+        ws_inicial.update_acell('D5', datos["aforoInicial"])
+        ws_inicial.update_acell('D6', datos["aforoInicial"])
+        ws_inicial.update_acell('E3', datos["aforoInicial"])
+        ws_inicial.update_acell('C2', datos["aulaInicial"])
+        
+        ws_primaria = sh.worksheet("PRIM")
+        ws_primaria.update_acell('E3', datos["aforoPrimaria"])
+        ws_primaria.update('D5:D10', [[datos["aforoPrimaria"]]] * 6)
+        
+        ws_sec = sh.worksheet("SEC")
+        ws_sec.update_acell('E3', datos["aforoSecundaria"])
+        ws_sec.update('D5:D9', [[datos["aforoSecundaria"]]] * 5)
+
+        print("⏳ Esperando recalculo de Google Sheets...")
+        time.sleep(3)
+
+        # --- 2. EXTRACCIÓN ---
+        ws_calculos = sh.worksheet("CALCULOS")
+        # Traemos la data cruda para evitar que Google Sheets ignore las comas
+        data = ws_calculos.get_all_values() 
+        
+        # Crear DataFrame (fila 0 es cabecera)
+        df_calculos = pd.DataFrame(data[1:], columns=data[0])
+
+        # --- 3. LIMPIEZA DE DECIMALES (Punto vs Coma) ---
+        def limpiar_numeros(valor):
+            if valor is None or str(valor).strip() == "":
+                return 0.0
+            
+            s_valor = str(valor).strip()
+            
+            # Si detectamos formato latino (7,5), lo convertimos a estándar (7.5)
+            if "," in s_valor:
+                # Quitamos puntos de miles si existieran y cambiamos coma por punto
+                s_valor = s_valor.replace('.', '').replace(',', '.')
+            
+            try:
+                # Intentamos convertir a float
+                return float(s_valor)
+            except ValueError:
+                # Si falla (ej: es el texto "Derecha"), devolvemos el valor original
+                return valor
+
+        # Usamos .map() en lugar de .applymap() para compatibilidad con Pandas 2.x
+        df_calculos = df_calculos.map(limpiar_numeros)
+
+        # --- 4. LIMPIEZA FINAL ---
+        # Eliminar columnas sin nombre y filas totalmente vacías
+        df_calculos = df_calculos.loc[:, df_calculos.columns != '']
+        df_calculos.dropna(how="all", inplace=True)
+        
+        print(f"✅ Proceso completado. {len(df_calculos)} filas listas.")
+        return df_calculos
+
+    except Exception as e:
+        print(f"❌ Error crítico en el flujo: {e}")
+        # IMPORTANTE: Devolvemos un DataFrame vacío en lugar de None 
+        # para que el resto del código no explote con "NoneType object is not subscriptable"
+        return pd.DataFrame()
+
+# # --- EJEMPLO DE USO ---
+# mis_datos = {
+#     "aforoInicial": 50,
+#     "aulaInicial": "Aula 101",
+#     "aforoPrimaria": 30,
+#     "aforoSecundaria": 25
+# }
+# df_final = procesar_y_extraer_sheets(mis_datos, "MARIATEGUI")
+# df_final
 
 # df_resultados = extraer_df_calculos(archivo)
 
