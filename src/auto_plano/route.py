@@ -8,7 +8,7 @@ from shapely import Polygon
 from src.auto_plano.generate_2d import dibujar_geometrias, dibujar_geometrias_por_piso
 from src.auto_plano.generate_vertices import generate_geometry
 from src.auto_plano.repository import actualizar_vectores_proyecto, obtener_proyecto_por_id
-from src.auto_plano.service import exportar_unico_archivo_cad, find_max_rect_for_angle_fast, find_multiple_max_rectangles_optimized, local_a_mundo, procesar_distribucion_principal, procesar_excel_real, extraer_df_calculos, procesar_multiple_terrenos, procesar_rectangulo_recto_al_origen, procesar_segundo_cuadrante, procesar_geometria_utm, reconstruir_zonas, visualizar_distribucion_global
+from src.auto_plano.service import exportar_unico_archivo_cad, find_max_rect_for_angle_fast, find_multiple_max_rectangles_optimized, local_a_mundo, procesar_distribucion_principal, procesar_excel_real, procesar_y_extraer_sheets, extraer_df_calculos, procesar_multiple_terrenos, procesar_rectangulo_recto_al_origen, procesar_segundo_cuadrante, procesar_geometria_utm, reconstruir_zonas, visualizar_distribucion_global
 from utils.utils import preparar_df_para_api, restaurar_plano, vertices_a_dataframe
 from fastapi.responses import HTMLResponse
 import plotly.graph_objects as go
@@ -96,14 +96,14 @@ async def read_item(data: dict = Body(...)):
         "ancho" : ancho_max_cuadrante,
         "area_m2" : largo_max_cuadrante * ancho_max_cuadrante
     }])
-
-
     
     # Procesar en el excel
-    procesar_excel_real(aforo, archivo)
+    # procesar_excel_real(aforo, archivo)
+    
+    df_ambientes = procesar_y_extraer_sheets(aforo, "MARIATEGUI")
     
     # Extraer data en DF del excel
-    df_ambientes = extraer_df_calculos(archivo)
+    # df_ambientes = extraer_df_calculos(archivo)
     df_excel = df_ambientes
     
     # Pabellones
