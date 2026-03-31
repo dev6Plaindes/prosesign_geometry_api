@@ -9,6 +9,7 @@ from shapely import affinity
 from rasterio import features
 from affine import Affine
 from src.auto_plano.zona import Zona
+import pandas as pd
 
 # Tus datos de entrada
 aforo = {
@@ -336,13 +337,14 @@ def procesar_rectangulo_recto_al_origen(rect_shapely, angulo_optimo):
     area_final = rect_0.area
 
     # 🔁 DEVOLVER DICCIONARIO TÉCNICO
-    return {
+    return pd.DataFrame([
+        {
         # Geometría normalizada (para el algoritmo de empaquetamiento/distribución)
         "geometria": rect_0,
 
         # Datos métricos
         "ancho": width_m,
-        "alto": height_m,
+        "largo": height_m,
         "area": area_final,
 
         # Metadatos para revertir la transformación (Reverse mapping)
@@ -350,6 +352,7 @@ def procesar_rectangulo_recto_al_origen(rect_shapely, angulo_optimo):
         "origin": origin,
         "offset": (minx, miny)
     }
+    ])
     
 from shapely.ops import unary_union
 

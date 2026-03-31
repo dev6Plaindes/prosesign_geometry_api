@@ -1,0 +1,19 @@
+services:
+  # Servicio de Geometría (Python/FastAPI)
+  geometry-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: prodesign-geometry-api
+    ports:
+      - "8001:8001"
+    volumes:
+      - .:/app
+    environment:
+      - ENV=production
+    networks:
+      - prosupervision_network
+
+networks:
+  prosupervision_network:
+    external: true

@@ -13,9 +13,17 @@ router_v1.include_router(project_router)
 
 app.include_router(router_v1)
 
+origins = [
+    "http://localhost:5199",           # Tu Frontend de React local
+    "http://192.168.18.200:5199",     # Tu Frontend por IP local
+    "https://*.ngrok-free.app",        # Si usas ngrok
+    "http://192.168.18.200:8001",     # La propia IP de la API
+    "*"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

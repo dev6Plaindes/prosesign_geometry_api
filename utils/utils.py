@@ -1,46 +1,103 @@
-from fastapi.encoders import jsonable_encoder
+from shapely.geometry import mapping
 import pandas as pd
 import numpy as np
+from shapely.geometry import shape
+from shapely import affinity
 
-def preparar_df_para_api(df_global):
-    """
-    Convierte geometrías de Shapely y objetos complejos en 
-    formatos serializables. Maneja tanto DataFrames como Listas.
-    """
-    # 1. Validar si recibimos una lista (ya procesada)
-    if isinstance(df_global, list):
-        # Si la lista ya tiene diccionarios, solo aseguramos compatibilidad JSON
-        return jsonable_encoder(df_global)
+def preparar_df_para_api(df: pd.DataFrame) -> list:
+    df_serializado = df.copy()
 
-    # 2. Si es DataFrame, validar que no esté vacío
-    if df_global is None or (hasattr(df_global, 'empty') and df_global.empty):
-        return []
+    # 🔥 1. Reemplazar NaN por None (CLAVE)
+    df_serializado = df_serializado.replace({np.nan: None})
 
-    # 3. Procesamiento si es un DataFrame original
-    df_api = df_global.copy()
+    # 🔷 2. Serializar geometrías
+    columnas_geom = [
+        "geometria",
+        "geometria_marco",
+        "geometria_hoja",
+        "geometria_arco"
+    ]
 
-    # Convertir Polígonos a Listas de Coordenadas (geometria_mundo)
-    if "geometria_mundo" in df_api.columns:
-        df_api["geometria_mundo"] = df_api["geometria_mundo"].apply(
-            lambda p: list(p.exterior.coords) if hasattr(p, 'exterior') and not p.is_empty else p
+    for col in columnas_geom:
+        if col in df_serializado.columns:
+            df_serializado[col] = df_serializado[col].apply(
+                lambda g: mapping(g) if g is not None else None
+            )
+
+    # 🔁 3. Convertir a JSON-ready
+    return df_serializado.to_dict(orient="records")
+
+
+def reconstruir_geometria(geojson):
+    if geojson is None:
+        return None
+    return shape(geojson)  # 👈 convierte GeoJSON → Shapely
+
+
+def vertices_a_dataframe(vertices: list) -> pd.DataFrame:
+    df = pd.DataFrame(vertices)
+
+    # 🔁 Convertir geometría
+    if "geometria" in df.columns:
+        df["geometria"] = df["geometria"].apply(reconstruir_geometria)
+
+    # (opcional) si tienes más geometrías
+    columnas_geom = ["geometria_marco", "geometria_hoja", "geometria_arco"]
+
+    for col in columnas_geom:
+        if col in df.columns:
+            df[col] = df[col].apply(reconstruir_geometria)
+
+    return df
+
+
+
+def restaurar_plano(df_plano, df_cuadrante_real, best_angle):
+
+    df = df_plano.copy()
+
+    g_rect = df_cuadrante_real.iloc[0]["geometria"]
+
+    cx_rect = g_rect.centroid.x
+    cy_rect = g_rect.centroid.y
+
+    largo = df_cuadrante_real.iloc[0]["largo"]
+    ancho = df_cuadrante_real.iloc[0]["ancho"]
+
+    ang = np.radians(best_angle)
+
+    cos = np.cos(ang)
+    sin = np.sin(ang)
+
+    # vectores de orientación
+    vx = cos
+    vy = sin
+
+    px = -sin
+    py = cos
+
+    # corregir media dimensión
+    xoff = cx_rect - vx*largo/2 - px*ancho/2
+    yoff = cy_rect - vy*largo/2 - py*ancho/2
+
+    a = cos
+    b = -sin
+    d = sin
+    e = cos
+
+    geoms = []
+
+    for g in df["geometria"]:
+
+        g2 = affinity.affine_transform(
+            g,
+            [a, b, d, e, xoff, yoff]
         )
 
-    # Convertir Geometría local
-    if "geometria" in df_api.columns:
-        df_api["geometria"] = df_api["geometria"].apply(
-            lambda p: list(p.exterior.coords) if hasattr(p, 'exterior') else p
-        )
+        geoms.append(g2)
 
-    # Limpiar columnas no serializables
-    columnas_a_quitar = ["instancia_zona", "instancia_terreno"]
-    for col in columnas_a_quitar:
-        if col in df_api.columns:
-            df_api = df_api.drop(columns=[col])
+    df["geometria"] = geoms
+    df["x"] = df["geometria"].apply(lambda g: g.centroid.x)
+    df["y"] = df["geometria"].apply(lambda g: g.centroid.y)
 
-    # IMPORTANTE: Reemplazar NaNs por None para evitar el error "nan is not JSON compliant"
-    df_api = df_api.replace({np.nan: None})
-
-    # 4. Convertir a lista de diccionarios
-    datos_dict = df_api.to_dict(orient="records")
-    
-    return jsonable_encoder(datos_dict)
+    return df
