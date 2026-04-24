@@ -1030,3 +1030,104 @@ def exportar_unico_archivo_cad(df, filename="plano_georeferenciado.dxf"):
 
     doc.saveas(filename)
     print(f"✅ DXF Exportado con éxito: {filename}")
+    
+    
+import numpy as np
+import pandas as pd
+from shapely.geometry import box, Polygon
+from shapely import affinity
+from rasterio import features
+from affine import Affine
+
+def get_maximal_rectangle_dataframe(utm_coords, cell_size=0.05, angle_step=5):
+    """
+    Normaliza, calcula el rectángulo máximo y retorna (DataFrame, best_angle, offsets).
+    """
+    from shapely import affinity
+    from shapely.geometry import Polygon, box
+    from rasterio import features, Affine
+    import numpy as np
+    import pandas as pd
+
+    # --- 1. NORMALIZACIÓN INTERNA ---
+    coords = np.array(utm_coords)
+    x0_min, y0_min = coords[:, 0].min(), coords[:, 1].min()
+    coords_norm = coords - [x0_min, y0_min]
+    polygon_norm = Polygon(coords_norm)
+    
+    # --- 2. FUNCIONES INTERNAS (Sin cambios en lógica) ---
+    def maximal_rectangle(matrix):
+        if not matrix.any(): return 0, (0, 0, 0, 0)
+        max_area = 0; max_rect = (0, 0, 0, 0)
+        dp = [0] * len(matrix[0])
+        for i in range(matrix.shape[0]):
+            for j in range(matrix.shape[1]):
+                dp[j] = dp[j] + 1 if matrix[i][j] == 1 else 0
+            stack = []
+            for j in range(len(dp) + 1):
+                while stack and (j == len(dp) or dp[j] < dp[stack[-1]]):
+                    height = dp[stack.pop()]
+                    width = j if not stack else j - stack[-1] - 1
+                    area = height * width
+                    if area > max_area:
+                        max_area = area
+                        max_rect = (i - height + 1, stack[-1] + 1 if stack else 0, height, width)
+                stack.append(j)
+        return max_area, max_rect
+
+    # --- 3. BÚSQUEDA DEL MEJOR ÁNGULO ---
+    angles = np.arange(0, 180, angle_step)
+    best_rect_norm, best_area, best_angle = None, 0, 0
+
+    for angle in angles:
+        # Lógica de rotación y rasterización sobre polygon_norm
+        bounds = polygon_norm.bounds
+        origin = ((bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2)
+        poly_rot = affinity.rotate(polygon_norm.buffer(-0.01), -angle, origin=origin)
+        
+        rb = poly_rot.bounds
+        w_px = int(np.ceil((rb[2] - rb[0]) / cell_size))
+        h_px = int(np.ceil((rb[3] - rb[1]) / cell_size))
+        
+        if w_px <= 0 or h_px <= 0: continue
+            
+        transform = Affine.translation(rb[0], rb[1]) * Affine.scale(cell_size, cell_size)
+        grid = features.rasterize([poly_rot], out_shape=(h_px, w_px), transform=transform, fill=0, default_value=1)
+        
+        area_px, (i, j, h, w) = maximal_rectangle(grid)
+        area_m2 = area_px * (cell_size ** 2)
+
+        if area_m2 > best_area:
+            best_area = area_m2
+            best_angle = angle
+            # Reconstruir rect en coords normales
+            x_r0, x_r1 = j * cell_size + rb[0], (j + w) * cell_size + rb[0]
+            y_r0, y_r1 = i * cell_size + rb[1], (i + h) * cell_size + rb[1]
+            best_rect_norm = affinity.rotate(box(x_r0, y_r0, x_r1, y_r1), angle, origin=origin)
+
+    if best_rect_norm is None:
+        return pd.DataFrame(), 0, (x0_min, y0_min)
+
+    # --- 4. RETORNO DE RESULTADOS ---
+    # Calculamos dimensiones antes de des-normalizar
+    c = list(best_rect_norm.exterior.coords)
+    l1 = np.linalg.norm(np.array(c[0]) - np.array(c[1]))
+    l2 = np.linalg.norm(np.array(c[1]) - np.array(c[2]))
+
+    # Creamos el DF (puedes elegir si devolverlo normalizado o real)
+    # Aquí lo devuelvo normalizado para tu Plotly 3D
+    df_res = pd.DataFrame([{
+        "tipo": "Cuadrante",
+        "geometria": best_rect_norm,
+        "x": best_rect_norm.centroid.x,
+        "y": best_rect_norm.centroid.y,
+        "z": 0,
+        "nombre": "Cuadrante Máximo",
+        "largo": round(max(l1, l2), 2),
+        "ancho": round(min(l1, l2), 2),
+        "area_m2": round(best_area, 2),
+        "angulo": best_angle
+    }])
+
+    return df_res, best_angle, (x0_min, y0_min)
+

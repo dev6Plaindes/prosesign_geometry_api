@@ -8,7 +8,7 @@ from shapely import Polygon
 from src.auto_plano.generate_2d import dibujar_geometrias, dibujar_geometrias_por_piso
 from src.auto_plano.generate_vertices import generate_geometry
 from src.auto_plano.repository import actualizar_vectores_proyecto, obtener_proyecto_por_id
-from src.auto_plano.service import exportar_unico_archivo_cad, find_max_rect_for_angle_fast, find_multiple_max_rectangles_optimized, local_a_mundo, procesar_distribucion_principal, procesar_excel_real, procesar_y_extraer_sheets, extraer_df_calculos, procesar_multiple_terrenos, procesar_rectangulo_recto_al_origen, procesar_segundo_cuadrante, procesar_geometria_utm, reconstruir_zonas, visualizar_distribucion_global
+from src.auto_plano.service import exportar_unico_archivo_cad, find_max_rect_for_angle_fast, find_multiple_max_rectangles_optimized, get_maximal_rectangle_dataframe, local_a_mundo, procesar_distribucion_principal, procesar_excel_real, procesar_y_extraer_sheets, extraer_df_calculos, procesar_multiple_terrenos, procesar_rectangulo_recto_al_origen, procesar_segundo_cuadrante, procesar_geometria_utm, reconstruir_zonas, visualizar_distribucion_global
 from utils.utils import preparar_df_para_api, restaurar_plano, vertices_a_dataframe
 from fastapi.responses import HTMLResponse
 import plotly.graph_objects as go
@@ -29,6 +29,9 @@ async def read_item(data: dict = Body(...)):
     
     # Convertimos a una matriz de NumPy
     coords_matrix = np.array(utm_coords)
+    
+    coords_matrix = np.array(data["vertices"])
+    x0, y0 = coords_matrix[:, 0].min(), coords_matrix[:, 1].min()
 
     # Separamos las columnas
     x_utm = coords_matrix[:, 0]
@@ -41,11 +44,6 @@ async def read_item(data: dict = Body(...)):
     
     coords = list(zip(x, y))
     poly = Polygon(coords)
-
-    # 3. Obtener propiedades
-    area_poly = poly.area
-    perimetro = poly.length
-    centroide = poly.centroid
     
     df_vertices_terreno = pd.DataFrame([{
         "tipo": "Terreno",
@@ -54,48 +52,8 @@ async def read_item(data: dict = Body(...)):
         "y": poly.centroid.y,
         "nombre": "Vertices Terreno"
     }])
-    
-    # --- AREA MAS GRANDE ---
-    angles = np.arange(0, 180, 5)
-    best_rect, best_area, best_angle = None, 0, 0
-    
-    coords = np.array(utm_coords)
-
-    x0 = coords[:,0].min()
-    y0 = coords[:,1].min()
-
-    coords_norm = coords - [x0, y0]
-
-    polygon = Polygon(coords_norm)
-
-    angles = np.arange(0, 180, 5)
-    best_rect, best_area, best_angle = None, 0, 0
-
-    for angle in angles:
-        rect, area, _ = find_max_rect_for_angle_fast(polygon, angle, cell_size=0.5)
-        if rect and area > best_area:
-            best_rect, best_area, best_angle = rect, area, angle
-
-    print(f"Mejor área: {best_area:.2f} m² en ángulo {best_angle}°")
-
-    coords = list(best_rect.exterior.coords)
-
-    lado1 = np.linalg.norm(np.array(coords[0]) - np.array(coords[1]))
-    lado2 = np.linalg.norm(np.array(coords[1]) - np.array(coords[2]))
-
-    largo_max_cuadrante = max(lado1, lado2)
-    ancho_max_cuadrante = min(lado1, lado2)
-
-    df_cuadrante_max = pd.DataFrame([{
-        "tipo": "Cuadrante",
-        "geometria": best_rect,
-        "x": best_rect.centroid.x,
-        "y": best_rect.centroid.y,
-        "nombre": "Cuadrante Maximo",
-        "largo" : largo_max_cuadrante,
-        "ancho" : ancho_max_cuadrante,
-        "area_m2" : largo_max_cuadrante * ancho_max_cuadrante
-    }])
+    # --- EJEMPLO DE USO ---
+    df_cuadrante_max, best_angle, offsets = get_maximal_rectangle_dataframe(vertices)
     
     # Procesar en el excel
     # procesar_excel_real(aforo, archivo)
