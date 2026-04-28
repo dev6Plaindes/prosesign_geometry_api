@@ -1,9 +1,8 @@
 import plotly.graph_objects as go
 from shapely.geometry import Polygon
 import pandas as pd
-
 class Muro:
-    def __init__(self, ancho, largo, x=0, y=0, piso=1, description="muro", lado=None, altura=2.7, altura_piso=3.0):
+    def __init__(self, ancho, largo, x=0, y=0, z=0, piso=1, description="muro", lado=None, altura=2.7, altura_piso=3.0):
         self.ancho = ancho
         self.largo = largo
         self.altura = altura
@@ -12,6 +11,7 @@ class Muro:
         self.description = description
         self.x = x
         self.y = y
+        self.z = z
         self.lado = lado
         self.altura_piso = altura_piso
 
@@ -29,8 +29,12 @@ class Muro:
         ])
 
         # 2. Geometría 3D
-        z_base = (self.piso - 1) * self.altura_piso
-        z_techo = z_base + self.altura
+        if self.z == 0:
+          z_base = (self.piso - 1) * self.altura
+          z_techo = z_base + self.altura
+        else:
+          z_base = self.z
+          z_techo = z_base + self.altura
 
         x_b, y_b = self.geometria.exterior.xy
         xl, yl = list(x_b), list(y_b)
@@ -54,26 +58,26 @@ class Muro:
         if self.ancho >= self.largo:
             # Muro horizontal (Se divide en el eje X)
             muro_izq = Muro(
-                offset_inicio, self.largo, self.x, self.y,
-                self.piso, self.description + " izquierda", lado, self.altura
+                ancho=offset_inicio,largo= self.largo,x= self.x,y= self.y,
+                piso=self.piso, description=self.description + " izquierda", lado=lado,altura= self.altura
             ) if offset_inicio > 0 else None
 
             resto_derecho = self.ancho - (offset_inicio + ancho_corte)
             muro_der = Muro(
-                resto_derecho, self.largo, self.x + offset_inicio + ancho_corte, self.y,
-                self.piso, self.description + " derecha", lado, self.altura
+                ancho=resto_derecho,largo= self.largo,x= self.x + offset_inicio + ancho_corte,y= self.y,
+                piso=self.piso, description=self.description + " derecha", lado=lado, altura=self.altura
             ) if resto_derecho > 0 else None
         else:
             # Muro vertical (Se divide en el eje Y)
             muro_izq = Muro(
-                self.ancho, offset_inicio, self.x, self.y,
-                self.piso, self.description + " arriba", lado, self.altura
+                ancho=self.ancho,largo= offset_inicio, x=self.x, y=self.y,
+                piso=self.piso, description=self.description + " arriba", lado=lado, altura=self.altura
             ) if offset_inicio > 0 else None
 
             resto_abajo = self.largo - (offset_inicio + ancho_corte)
             muro_der = Muro(
-                self.ancho, resto_abajo, self.x, self.y + offset_inicio + ancho_corte,
-                self.piso, self.description + " abajo", lado, self.altura
+                ancho=self.ancho, largo=resto_abajo, x=self.x, y=self.y + offset_inicio + ancho_corte,
+                piso=self.piso, description=self.description + " abajo", lado=lado, altura=self.altura
             ) if resto_abajo > 0 else None
 
         return [m for m in [muro_izq, muro_der] if m is not None]
@@ -126,3 +130,4 @@ class Muro:
             "geometria": [self.geometria], "x": [self.x], "y": [self.y],
             "tipo": ["muro"], "lado": [self.lado], "geometria_3d": [self.geometria_3d]
         })
+

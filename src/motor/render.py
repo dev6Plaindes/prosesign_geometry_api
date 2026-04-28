@@ -38,6 +38,10 @@ class Render:
             hay_datos_en_piso = False
 
             for registro in lista_a_dibujar:
+                # 1. Extraer tipo y descripción primero
+                tipo = registro.get('tipo')
+                descripcion = registro.get("description", "Objeto")
+                
                 piso_registro = None 
                 val_piso = registro.get("piso") 
 
@@ -47,38 +51,52 @@ class Render:
                 elif pd.notnull(val_piso):
                     piso_registro = val_piso
 
-                # FILTRO
-                if piso_registro != nivel_actual:
+                # 2. FILTRO EXPANDIDO:
+                # Se dibuja si:
+                # - Es del piso actual
+                # - O es tipo 'max_rect'
+                # - O su descripción es 'Render'
+                es_siempre_visible = (tipo == "max_rect" or descripcion == "Render")
+                
+                if piso_registro != nivel_actual and not es_siempre_visible:
                     continue
 
                 hay_datos_en_piso = True
                 x, y = registro["geometria"].exterior.xy
-                tipo = registro.get('tipo')
 
                 scatter_params = dict(
                     x=list(x), y=list(y), fill="toself", mode='lines'
                 )
+                
+                # Lógica de leyenda mejorada
+                if_showlengd = "techo" in descripcion.lower()
+                if_showlengd = not if_showlengd
 
-                # --- Lógica de colores ---
+                # 3. RENDERIZADO
                 if tipo == "muro":
                     fig.add_trace(go.Scatter(**scatter_params, fillcolor="rgba(200, 200, 200, 0.5)",
-                                             line=dict(color="black", width=1), showlegend=False))
+                                            line=dict(color="black", width=1), showlegend=False))
                 elif tipo == "columna":
                     fig.add_trace(go.Scatter(**scatter_params, fillcolor="black",
-                                             line=dict(color="black", width=1), showlegend=False))
+                                            line=dict(color="black", width=1), showlegend=False))
                 elif tipo == "ventana":
                     fig.add_trace(go.Scatter(**scatter_params, fillcolor="gray",
-                                             line=dict(color="black", width=1), showlegend=False))
+                                            line=dict(color="black", width=1), showlegend=False))
                 elif tipo == "techo":
                     fig.add_trace(go.Scatter(**scatter_params, fillcolor="gray",
-                                             line=dict(color="black", width=1), showlegend=False))
+                                            line=dict(color="black", width=1), showlegend=False))
                 elif tipo == "max_rect":
                     fig.add_trace(go.Scatter(**scatter_params, fillcolor="rgba(200, 200, 200, 0.0)",
-                                             line=dict(color="black", width=1, dash="dash"), showlegend=False))
+                                            line=dict(color="black", width=1, dash="dash"), 
+                                            name="Límite Terreno", showlegend=False))
                 else:
-                    fig.add_trace(go.Scatter(**scatter_params, fillcolor="rgba(255, 255, 255, 0.2)",
-                                             line=dict(color="gray", width=1),
-                                             name=registro.get("description", "Objeto")))
+                    # Aquí caen los "Render" y otros ambientes
+                    # Si es Render, podrías querer un estilo específico, si no, usa el default:
+                    fill_color = "rgba(50, 50, 50, 0.0)" if descripcion == "Render" else "rgba(255, 255, 255, 0.2)"
+                    
+                    fig.add_trace(go.Scatter(**scatter_params, fillcolor=fill_color,
+                                            line=dict(color="gray", width=1),
+                                            name=descripcion, showlegend=if_showlengd))
 
             if hay_datos_en_piso:
                 fig.update_layout(
@@ -91,7 +109,7 @@ class Render:
                 figuras_html += fig.to_html(full_html=False, include_plotlyjs='cdn')
         
         return figuras_html
-
+    
     def render_3d(self):
         # 1. Aseguramos que los datos base estén listos
         self.convert_data()
@@ -107,7 +125,7 @@ class Render:
 
             tipo = registro.get('tipo', 'default')
             color = "gray"
-            opacity = 0.8
+            opacity = 1.0
 
             # Definición de colores 3D por tipo
             if tipo == "muro":
@@ -116,19 +134,19 @@ class Render:
             
             elif tipo == "losa":
                 color = "gray"
-                opacity = 0.9
+                opacity = 1.0
             
             elif tipo == "escalera":
                 color = "lightgray"
-                opacity = 0.9
+                opacity = 1.0
             
             elif tipo == "descanso":
                 color = "lightgray"
-                opacity = 0.9
+                opacity = 1.0
             
             elif tipo == "pasadizo":
                 color = "lightgray"
-                opacity = 0.9
+                opacity = 1.0
 
             elif tipo == "columna":
                 color = "black"
@@ -168,6 +186,7 @@ class Render:
         )
 
         return fig
+    
 # # Ejecución
 
 # data_dict_transformada = df_geom_to_dict(data_transformada)

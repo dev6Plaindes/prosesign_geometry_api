@@ -1,6 +1,30 @@
+from src.motor.generate_distribution import auto_distribution_ambientes_y
 from src.motor.motor_2d_3d import Motor2D
+import numpy as np
+import pandas as pd
+from shapely import affinity
 
-def process_ambientes_motor_to_dict(df_excel, ancho_cuadrante, largo_cuadrante):
+def process_ambientes_motor_to_dict(df_excel, ancho_cuadrante, largo_cuadrante, angle):
+    
+    # Valores iniciales
+    ancho_c = ancho_cuadrante
+    largo_c = largo_cuadrante
+
+    # 1. El movimiento de ángulo ocurre si el largo es mayor al ancho
+    # Queremos que el valor más grande termine en 'max_ancho'
+    angulo_movido = 90 if largo_c > ancho_c else 0
+
+    # 2. Asignación: max_ancho siempre será el valor mayor
+    if angulo_movido == 90:
+        max_ancho = largo_c
+        max_largo = ancho_c
+    else:
+        max_ancho = ancho_c
+        max_largo = largo_c
+
+    # 3. Guardar el ángulo final (Normalizado a 180°)
+    angulo_final = (angle + angulo_movido) % 180
+    
     df_pab_sec =  df_excel[df_excel["Pabellon"]=="Derecha"]
     df_pab_prim = df_excel[df_excel["Pabellon"]=="Izquierda"]
     df_pab_inicial = df_excel[df_excel["Pabellon"]=="Inferior"]
@@ -160,33 +184,47 @@ def process_ambientes_motor_to_dict(df_excel, ancho_cuadrante, largo_cuadrante):
     esc_prim, primaria, esc_prim_2 = pab_primaria.areas_m(2.4, "auto", 2.4, direccion="vertical")
 
     _, esp_esc_prim = esc_prim.areas_m("auto",4 , direccion="horizontal")
-    esp_esc_prim.escalera(direccion="este")
+    
+    pabellon_primaria = auto_distribution_ambientes_y(df_excel, ancho_c)
+    pisos_primaria = pabellon_primaria["Piso"].max()
+    esp_esc_prim.escalera(direccion="este", pisos=pisos_primaria)
 
-    aula_in_prim = primaria.aula(aula_in_ancho_prim, aula_in_largo_prim, description="Aula de Innovacion")
-    biblioteca_prim = primaria.aula(biblio_ancho_prim, biblio_largo_prim, description="Biblioteca")
-    taller_prim = primaria.aula(taller_ancho_prim, taller_largo_prim, description="Taller creativo")
-    aulas_prim = [primaria.aula(ancho_prim, largo_prim, description="Aula Primaria") for _ in range(cantidad_prim)]
+    for index, row in pabellon_primaria.iterrows():
+        aula_in_prim = primaria.aula(row["Ancho_Individual"], row["Largo_Individual"], description="Aula de Innovacion", piso=row["Piso"])
 
-    ancho_pas_prim = primaria.sumar_largos_aulas_por_piso(1)
+    for i in range(1,pisos_primaria + 1):
+        sshh_in_prim = primaria.bano(7.5, 2, description=f"SSHH Primaria Hombres {i}", piso=i)
+        sshh_in_prim_2 = primaria.bano(7.5, 2, description=f"SSHH Primaria Mujeres {i}", piso=i)
+
+    ancho_pas_prim = pab_primaria.largo
+    pabellon_prim_largo = pabellon_primaria["Largo_Total_Piso"].max() + esc_prim.largo + (sshh_in_prim.largo * 2)
+    
     info_pisos_prim = primaria.obtener_resumen_pisos()
 
-    pas_prim.pasadizos_mult(2 , ancho_pas_prim, pisos=primaria.pisos, lado="O", info_pisos= info_pisos_prim)
+    pas_prim.pasadizos_mult(ancho=2 , largo =ancho_pas_prim, largo_balcon=pabellon_prim_largo, pisos=primaria.pisos, lado="O", info_pisos= info_pisos_prim)
 
     # secundaria
     esc_sec, secundaria, esc_sec_2 = pab_secundaria.areas_m(2.4, "auto", 2.4, direccion="vertical")
 
     esp_esc_secundaria,_  = esc_sec.areas_m(4 ,"auto", direccion="horizontal")
-    esp_esc_secundaria.escalera(direccion="oeste")
+
+    pabellon_sec = auto_distribution_ambientes_y(df_excel, ancho_c, pabellon="Derecha")
+    pisos_secundaria = pabellon_sec["Piso"].max()
+    esp_esc_secundaria.escalera(direccion="oeste", pisos=pisos_secundaria)
+
+    for index, row in pabellon_sec.iterrows():
+        aula_in_prim = secundaria.aula(row["Ancho_Individual"], row["Largo_Individual"], description=row["Ambiente"], piso=row["Piso"], lado="left")
+
+    for i in range(1,pisos_secundaria + 1):
+        sshh_in_sec = secundaria.bano(7.5, 2, description=f"SSHH secundaria Hombres {i}", piso=i, lado="left")
+        sshh_in_sec_2 = secundaria.bano(7.5, 2, description=f"SSHH secundaria Mujeres {i}", piso=i, lado="left")
 
 
-    aula_in_sec = secundaria.aula(aula_in_ancho_sec, aula_in_largo_sec, description="Aula de Innovacion", lado="left")
-    biblioteca_sec = secundaria.aula(biblio_ancho_sec, biblio_largo_sec, description="Biblioteca", lado="left")
-    taller_sec = secundaria.aula(taller_ancho_sec, taller_largo_sec, description="Taller creativo", lado="left")
-    aulas_sec = [secundaria.aula(ancho_sec, largo_sec, description="Aula Secundaria", lado="left") for _ in range(cantidad_sec)]
-
-    ancho_pas_sec = secundaria.sumar_largos_aulas_por_piso(1)
+    ancho_pas_sec = pab_secundaria.largo
     info_pisos_sec = secundaria.obtener_resumen_pisos()
-    pas_sec.pasadizos_mult(1.2 , ancho_pas_sec, pisos=secundaria.pisos, info_pisos= info_pisos_sec)
+    pabellon_sec_largo = pabellon_sec["Largo_Total_Piso"].max() + esc_sec.largo + (sshh_in_sec.largo * 2)
+    
+    pas_sec.pasadizos_mult(ancho=2 , largo=ancho_pas_sec, largo_balcon=pabellon_sec_largo, pisos=secundaria.pisos, info_pisos= info_pisos_sec)
 
     inicial, b, admin = a.areas_m(ciclo1_largo, "auto",direccion_adm_largo, direccion="vertical")
 
@@ -199,29 +237,6 @@ def process_ambientes_motor_to_dict(df_excel, ancho_cuadrante, largo_cuadrante):
     sshh_adm_area = admin.aula(sshh_adm_ancho, sshh_adm_largo, description="SSHH Adm.", lado="top")
     admin.centrar_aulas()
 
-    # Inicial
-
-    # if exist_2do_cuad:
-    #     aulas_prim_2piso = primaria.get_aulas_por_piso(2)
-    #     aulas_sec_2piso = secundaria.get_aulas_por_piso(2)
-
-    #     # 1. Combinamos las listas si necesitas iterar sobre el total de aulas de 2do piso
-    #     todas_2piso = aulas_prim_2piso + aulas_sec_2piso
-
-    #     # 2. Creamos las aulas en 'inicial' recorriendo la cantidad deseada
-    #     # Usamos un bucle para tener mejor control sobre cada objeto creado
-    #     aulas_ciclo1_list = []
-    #     for i in range(ciclo1_cantidad):
-    #         nueva_aula = inicial.aula(
-    #             ancho=ciclo1_ancho,
-    #             largo=ciclo1_largo,
-    #             piso=1, # Asumiendo que inicial suele ir en piso 1
-    #             description=f"Aula Ciclo I - {i+1}",
-    #             lado="bottom"
-    #         )
-    #         aulas_ciclo1_list.append(nueva_aula)
-    #     inicial.centrar_aulas()
-    # else:
     aulas_ciclo1_list = [inicial.aula(ciclo1_ancho, ciclo1_largo, description="Aula Ciclo I", lado="bottom") for _ in range(ciclo1_cantidad)]
     aulas_ciclo2_list = [inicial.aula(ciclo2_ancho, ciclo2_largo, description="Aula Ciclo II", lado="bottom") for _ in range(ciclo2_cantidad)]
     psicomotricidad_area = inicial.aula(psico_ancho, psico_largo, description="Aulas Psicomotricidad", lado="bottom")
@@ -264,10 +279,10 @@ def process_ambientes_motor_to_dict(df_excel, ancho_cuadrante, largo_cuadrante):
         largo_losa=largo_losa
     )
     losas.centrar_losas()
-
-    ept.aula(ancho=ancho_ept, largo=largo_ept, description="Taller EPT", lado="right")
-    ept.centrar_aulas()
-
+    
+    if ept.largo >=ancho_ept:
+        ept.aula(ancho=ancho_ept, largo=largo_ept, description="Taller EPT", lado="right")
+        ept.centrar_aulas()
     # # Patio de Inicial (Cerca al pabellón de inicial)
 
     # if exist_2do_cuad ==False:
@@ -277,68 +292,94 @@ def process_ambientes_motor_to_dict(df_excel, ancho_cuadrante, largo_cuadrante):
     data =  render2d.get_data()
     # data_to_dict = data.to_dict(orient="records")
 
-    return data
+    return data, angulo_final
 
     # render2d.render_3d()
     # render_2 = Render(data_to_dict, pisos=2)
     # render_2.render_2d()
 
+
+
 import numpy as np
-import pandas as pd
 from shapely import affinity
+import math
 
-def transformar_df_con_referencia(df, df_cuadrante_real, best_angle):
+def obtener_angulo_orientacion(poligono):
+    """Calcula el ángulo del lado más largo del polígono respecto al eje X."""
+    coords = list(poligono.exterior.coords)[:-1]
+    max_dist = 0
+    angulo_detectado = 0
+    
+    # Buscamos el segmento más largo del rectángulo para determinar su orientación
+    for i in range(len(coords)):
+        p1 = coords[i]
+        p2 = coords[(i + 1) % len(coords)]
+        dist = math.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
+        
+        if dist > max_dist:
+            max_dist = dist
+            # Calcular ángulo en grados
+            angulo_detectado = math.degrees(math.atan2(p2[1] - p1[1], p2[0] - p1[0]))
+            
+    return angulo_detectado
+
+def transformar_df_con_referencia(df, df_cuadrante_real):
     """
-    Rotación + traslación SIN centroid.
-    Usa esquina inferior izquierda del bounding box como referencia.
+    Halla el ángulo automáticamente y alinea el tipo 'render' 
+    exactamente con el cuadrante real.
     """
+    df_result = df.copy()
+    
+    # 1. REFERENCIAS DE GEOMETRÍA
+    g_real = df_cuadrante_real.iloc[0]["geometria"]
+    
+    df_render = df[df['tipo'] == 'render']
+    if df_render.empty:
+        raise ValueError("No se encontró objeto tipo 'render' para alinear.")
+    g_render_local = df_render.iloc[0]["geometria"]
 
-    df = df.copy()
+    # 2. HALLAR ÁNGULO AUTOMÁTICAMENTE
+    # Calculamos la orientación de ambos y hallamos la diferencia
+    ang_real = obtener_angulo_orientacion(g_real)
+    ang_local = obtener_angulo_orientacion(g_render_local)
+    
+    # El ángulo necesario es la diferencia para que el local sea igual al real
+    angulo_necesario = ang_real - ang_local
 
-    g_rect = df_cuadrante_real.iloc[0]["geometria"]
-
-    minx, miny, maxx, maxy = g_rect.bounds
-
-    ancho = df_cuadrante_real.iloc[0]["ancho"]
-    largo = df_cuadrante_real.iloc[0]["largo"]
-
-    ang = np.radians(best_angle)
-
-    cos = np.cos(ang)
-    sin = np.sin(ang)
-
-    # matriz de rotación
-    a = cos
-    b = -sin
-    d = sin
-    e = cos
-
-    # 🔥 esquina base del cuadrante (NO centroid)
-    x0 = minx
-    y0 = miny
+    # 3. PUNTOS DE ANCLAJE (Centroides para calce perfecto)
+    dest_x, dest_y = g_real.centroid.x, g_real.centroid.y
+    orig_x, orig_y = g_render_local.centroid.x, g_render_local.centroid.y
 
     nuevas_geoms = []
 
-    for geom in df["geometria"]:
+    # 4. TRANSFORMACIÓN SOLIDARIA
+    for geom in df_result["geometria"]:
         if geom is None:
             nuevas_geoms.append(None)
             continue
 
-        # 1. rotar alrededor del origen local
-        g_rot = affinity.affine_transform(
-            geom,
-            [a, b, d, e, 0, 0]
+        # PASO A: Rotar respecto al centro del RENDER usando el ángulo calculado
+        g_rot = affinity.rotate(
+            geom, 
+            angulo_necesario, 
+            origin=(orig_x, orig_y)
         )
-
-        # 2. trasladar al sistema real usando esquina base
-        g_final = affinity.translate(g_rot, xoff=x0, yoff=y0)
+        
+        # PASO B: Trasladar para que los centros coincidan
+        g_final = affinity.translate(
+            g_rot, 
+            xoff = dest_x - orig_x, 
+            yoff = dest_y - orig_y
+        )
 
         nuevas_geoms.append(g_final)
 
-    df["geometria"] = nuevas_geoms
+    df_result["geometria"] = nuevas_geoms
+    
+    # Actualizar coordenadas para el DataFrame
+    df_result["x"] = df_result["geometria"].apply(lambda g: g.bounds[0] if g else None)
+    df_result["y"] = df_result["geometria"].apply(lambda g: g.bounds[1] if g else None)
 
-    # 🔥 actualizar x/y desde bounds (no centroid)
-    df["x"] = df["geometria"].apply(lambda g: g.bounds[0] if g else None)
-    df["y"] = df["geometria"].apply(lambda g: g.bounds[1] if g else None)
-
-    return df
+    # print(f"✨ Alineación Automática: {angulo_necesario:.2f}° aplicados.")
+    
+    return df_result

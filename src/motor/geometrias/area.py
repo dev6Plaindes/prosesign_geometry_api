@@ -7,7 +7,6 @@ from src.motor.geometrias.escalera import EscalerasCompleta
 from src.motor.geometrias.losa import Losa
 from src.motor.geometrias.pasadizo import Pasadizo
 
-
 class Area:
   def __init__(self, ancho, largo, x= 0, y = 0, pisos=1, description = "Area"):
     self.ancho = ancho
@@ -295,7 +294,7 @@ class Area:
     self.pasadizos.append(nueva)
     return nueva
 
-  def pasadizos_mult(self, ancho, largo, pisos=None, description="pasadizo", lado="E", info_pisos=[]):
+  def pasadizos_mult(self, ancho, largo, largo_balcon, pisos=None, description="pasadizo", lado="E", info_pisos=[]):
     """
     Crea pasadizos en múltiples pisos automáticamente.
 
@@ -311,8 +310,15 @@ class Area:
     for piso in range(1,pisos + 1):
         print(f"Creando pasadizo en piso {piso}")
         # reutilizamos tu lógica existente
-        self.pasadizo(ancho, info_pisos[piso - 1]["largo_total"], piso, f"{description}_{piso}", lado=lado)
-
+        if(piso==1):
+          self.pasadizo(ancho =1.2, largo= largo,piso= piso,description= f"{description}_{piso}", lado=lado)
+        else:
+          if lado=="E":
+            pas_new = self.pasadizo(ancho=ancho,largo=largo_balcon ,piso=piso , description=f"{description}_{piso}", lado=lado)
+            pas_new.x -= ancho - 1.2
+            pas_new._actualizar_geometrias()
+          else:
+            self.pasadizo(ancho=ancho, largo=largo_balcon,piso=piso, description=f"{description}_{piso}", lado=lado)
         pasadizos_creados.append(self.pasadizos[-1])
 
     return pasadizos_creados
@@ -448,35 +454,6 @@ class Area:
 
     return nueva
 
-  # def escalera(self, ancho, largo, piso=1, lado="left"):
-  #   """
-  #   Agrega una escalera al área
-  #   """
-  #   aulas_piso = [a for a in self.aulas if a.piso == piso]
-
-  #   # Coordenadas iniciales
-  #   if not aulas_piso:
-  #       abs_x, abs_y = self.x, self.y
-  #   else:
-  #       # Colocar al lado derecho de la última aula del mismo piso
-  #       ultima = aulas_piso[-1]
-  #       abs_x = ultima.x + ultima.ancho
-  #       abs_y = ultima.y
-
-  #       # Si se sale del límite del área, mover a la siguiente fila dentro del mismo piso
-  #       if abs_x + ancho > self.x + self.ancho:
-  #           abs_x = self.x
-  #           abs_y = ultima.y + ultima.largo
-
-  #   if abs_y + largo > self.y + self.largo:
-  #       # Subir al siguiente piso
-  #       piso += 1
-  #       abs_x, abs_y = self.x, self.y
-
-  #   escalera = Escalera(ancho, largo, abs_x, abs_y, piso)
-  #   self.escaleras.append(escalera)
-  #   return escalera
-
 
   def aula(self, ancho, largo, piso=1, description="aula", lado="right"):
     """
@@ -500,8 +477,8 @@ class Area:
             # Si se sale del ancho, saltar a la siguiente fila en el mismo piso
             if abs_x + ancho > self.x + self.ancho:
                 abs_x = self.x
-                abs_y = ultima.y + ultima.largo 
-                # Importante: Aquí 'ultima.largo' asume que todas las aulas 
+                abs_y = ultima.y + ultima.largo
+                # Importante: Aquí 'ultima.largo' asume que todas las aulas
                 # de la fila anterior tenían el mismo largo.
 
         # Verificar si cabe en el largo del terreno (en este piso)
@@ -861,7 +838,8 @@ class Area:
                 ancho=w,
                 largo=self.largo,
                 x=x0,
-                y=self.y
+                y=self.y,
+                pisos=1
             )
             resultados.append(sub)
             x0 += w
@@ -872,7 +850,8 @@ class Area:
                 ancho=self.ancho,
                 largo=l,
                 x=self.x,
-                y=y0
+                y=y0,
+                pisos=1
             )
             resultados.append(sub)
             y0 += l
@@ -1017,12 +996,35 @@ class Area:
 
     self._desplazar_elemento(objeto, offset_x, offset_y)
 
-  def escalera(self, direccion="norte"):
-    """Crea una escalera en el área."""
-    escalera_n = EscalerasCompleta(x=self.x, y=self.y, direccion=direccion)
-    escalera_n.generate_escaleras()
-    self.escaleras.append(escalera_n)
-    return escalera_n
+  def escalera(self, direccion="norte", pisos=2):
+    """Crea escaleras entre pisos consecutivos con salto de altura 3m"""
+
+    if pisos <= 1:
+        return "pisos insuficientes"
+
+    escaleras = []
+    print("pisos",pisos)
+
+    ALTURA_PISO = 3.0
+
+    for i in range(1, pisos):
+        z_inicio = (i - 1) * ALTURA_PISO
+        z_fin = i * ALTURA_PISO
+
+        escalera_n = EscalerasCompleta(
+            x=self.x,
+            y=self.y,
+            z=z_inicio,
+            direccion=direccion,
+            piso_inicio=i
+        )
+
+        escalera_n.generate_escaleras()
+        self.escaleras.append(escalera_n)
+        escaleras.append(escalera_n)
+
+    return escaleras
+      
 
   def _registrar_piso(self, piso):
     """Agrega el piso si no existe"""

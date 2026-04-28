@@ -44,7 +44,7 @@ class Aula:
         piso=self.piso,
         description=f"techo {self.description}",
         espesor=espesor,
-        z_base=z_base  # 🔥 ESTA LÍNEA FALTABA
+        z_base=z_base
     )
     return self.techo
 
@@ -57,16 +57,16 @@ class Aula:
     largo = self.largo
 
     # Muro inferior: ocupa todo el ancho en la base
-    muro_inf = Muro(ancho, grosor, x, y, self.piso, "muro inferior")
+    muro_inf = Muro(ancho=ancho, largo= grosor, x=x, y=y, piso=self.piso, description="muro inferior")
 
     # Muro superior: ocupa todo el ancho en la cima
-    muro_sup = Muro(ancho, grosor, x, y + largo - grosor, self.piso, "muro superior")
+    muro_sup = Muro(ancho=ancho, largo=grosor, x=x, y=y + largo - grosor, piso=self.piso,description= "muro superior")
 
     # Muro izquierdo: entre muro inferior y superior (sin solaparse)
-    muro_izq = Muro(grosor, largo - 2 * grosor, x, y + grosor, self.piso, "muro izquierdo")
+    muro_izq = Muro(ancho=grosor, largo=largo - 2 * grosor, x=x, y=y + grosor, piso=self.piso, description="muro izquierdo")
 
     # Muro derecho: espejado al izquierdo
-    muro_der = Muro(grosor, largo - 2 * grosor, x + ancho - grosor, y + grosor, self.piso, "muro derecho")
+    muro_der = Muro(ancho=grosor, largo=largo - 2 * grosor, x=x + ancho - grosor, y=y + grosor, piso=self.piso, description="muro derecho")
 
     self.muros.extend([muro_inf, muro_sup, muro_izq, muro_der])
 

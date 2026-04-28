@@ -1,20 +1,12 @@
-import os
-
-from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, Query
-from fastapi.responses import FileResponse
-import numpy as np
+from fastapi import APIRouter, Body
 import pandas as pd
-from shapely import Polygon
+from src.motor.export_xdf import get_max_pisos
 from src.motor.render import Render
 from src.motor.process_motor import process_ambientes_motor_to_dict, transformar_df_con_referencia
-from src.auto_plano.generate_2d import dibujar_geometrias, dibujar_geometrias_por_piso
-from src.auto_plano.generate_vertices import generate_geometry
 from src.auto_plano.repository import actualizar_vectores_proyecto, obtener_proyecto_por_id
-# from src.auto_plano.service import exportar_unico_archivo_cad, find_max_rect_for_angle_fast, find_multiple_max_rectangles_optimized, get_maximal_rectangle_dataframe, local_a_mundo, procesar_distribucion_principal, procesar_excel_real, procesar_y_extraer_sheets, extraer_df_calculos, procesar_multiple_terrenos, procesar_rectangulo_recto_al_origen, procesar_segundo_cuadrante, procesar_geometria_utm, reconstruir_zonas, visualizar_distribucion_global
-from utils.utils import preparar_df_para_api, restaurar_plano, vertices_a_dataframe
 from fastapi.responses import HTMLResponse
-import plotly.graph_objects as go
 import numpy as np
+from scipy.spatial.distance import euclidean
 
 from src.motor.max_cuadrante import find_best_rectangle, normalizar_polygon, polygon_get_data, df_geom_to_dict
 from src.motor.calculadora_sheets import procesar_y_extraer_sheets
@@ -47,14 +39,24 @@ async def motor_project(data: dict = Body(...)):
     max_cuadrante = polygon_get_data(rect)
     max_cuad_dict = df_geom_to_dict(max_cuadrante)
 
-    cuadrante_ancho = max_cuadrante.iloc[0]["ancho"]
-    cuadrante_largo = max_cuadrante.iloc[0]["largo"]
+    puntos = list(rect.exterior.coords)
+
+    lado_1 = euclidean(puntos[0], puntos[1])
+    lado_2 = euclidean(puntos[1], puntos[2])
+
+    cuadrante_largo = max(lado_1, lado_2)
+    cuadrante_ancho = min(lado_1, lado_2)
+
+    max_cuadrante = polygon_get_data(rect)
+    max_cuad_dict = df_geom_to_dict(max_cuadrante)
+    max_cuadrante.iloc[0]["ancho"] = cuadrante_ancho
+    max_cuadrante.iloc[0]["largo"] = cuadrante_largo
     
     # Generar plano
-    df_data_motor =  process_ambientes_motor_to_dict(df_excel,cuadrante_ancho, cuadrante_largo)
+    df_data_motor, angulo_final =  process_ambientes_motor_to_dict(df_excel,cuadrante_ancho, cuadrante_largo, angle)
     
     # Mover plano al cuadrante del terreno
-    data_transformada = transformar_df_con_referencia(df_data_motor, max_cuadrante, angle)
+    data_transformada = transformar_df_con_referencia(df_data_motor, max_cuadrante)
     data_dict_transformada = df_geom_to_dict(data_transformada)
     
     # Unir todas las geometrias y vertices del terreno
@@ -79,7 +81,8 @@ async def render_project(item_id: int, render: str):
     project = obtener_proyecto_por_id(item_id)
     
     geometrias = project.get("vertices_generadas", [])
-    render_api = Render(geometrias, pisos=3)
+    max_piso = get_max_pisos(geometrias)
+    render_api = Render(geometrias, pisos=max_piso)
     print(render)
     
     if render=="2d":
