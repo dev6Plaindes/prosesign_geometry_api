@@ -2,3 +2,9 @@
 venv
 __pycache__
 hip-service-491917-s6-4e534bb75127.json
+
+data_ambiente.csv
+src.zip
+/renders
+/renders_ai
+/notebooks

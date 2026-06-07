@@ -27,10 +27,10 @@ class Aula:
     self.muros=[]
     self.puertas=[]
     self.columnas = []
-    self.crear_muros()
+    # self.crear_muros()
     self.crear_columnas()
     self.techo = None
-    self.crear_techo()
+    # self.crear_techo()
 
   def crear_techo(self, espesor=0.3, altura_piso=2.7):
 
@@ -100,44 +100,94 @@ class Aula:
 
   def get_data(self):
 
-    dataframes = []
+    data = []
 
-    # 🔷 1. Aula
-    data_aula = pd.DataFrame({
-        "ancho": [self.ancho],
-        "largo": [self.largo],
-        "area": [self.area],
-        "piso": [self.piso],
-        "description": [self.description],
-        "geometria": [self.geometria],
-        "x": [self.x],
-        "y": [self.y],
-        "tipo": ["aula"],
-        "geometria_3d" : [self.geometria_3d],
-    })
+    # =====================================
+    # 1. AULA
+    # =====================================
+    data_aula = {
+        "ancho": self.ancho,
+        "largo": self.largo,
+        "area": self.area,
+        "piso": self.piso,
+        "description": self.description,
+        "geometria": self.geometria,
+        "x": self.x,
+        "y": self.y,
+        "tipo": "aula",
+        "geometria_3d": self.geometria_3d,
+    }
 
-    dataframes.append(data_aula)
+    data.append(data_aula)
 
-    # 🔥 2. Muros
+    # =====================================
+    # 2. MUROS
+    # =====================================
     for muro in self.muros:
+
         if hasattr(muro, "get_data"):
-            dataframes.append(muro.get_data())
 
-    # 🔥 3. Columnas
+            muro_data = muro.get_data()
+
+            # Equivalente exacto de concat
+            if isinstance(muro_data, list):
+
+                data.extend(muro_data)
+
+            else:
+
+                data.append(muro_data)
+
+    # =====================================
+    # 3. COLUMNAS
+    # =====================================
     for col in self.columnas:
+
         if hasattr(col, "get_data"):
-            dataframes.append(col.get_data())
 
-    # 🔥 4. Puertas
+            col_data = col.get_data()
+
+            if isinstance(col_data, list):
+
+                data.extend(col_data)
+
+            else:
+
+                data.append(col_data)
+
+    # =====================================
+    # 4. PUERTAS
+    # =====================================
     for puerta in self.puertas:
+
         if hasattr(puerta, "get_data"):
-            dataframes.append(puerta.get_data())
 
-    if self.techo and hasattr(self.techo, "get_data"):
-        dataframes.append(self.techo.get_data())
+            puerta_data = puerta.get_data()
 
-    # 🔗 Unir todo
-    return pd.concat(dataframes, ignore_index=True)
+            if isinstance(puerta_data, list):
+
+                data.extend(puerta_data)
+
+            else:
+
+                data.append(puerta_data)
+
+    # =====================================
+    # TECHO (si activas luego)
+    # =====================================
+    # if self.techo and hasattr(self.techo, "get_data"):
+    #
+    #     techo_data = self.techo.get_data()
+    #
+    #     if isinstance(techo_data, list):
+    #         data.extend(techo_data)
+    #     else:
+    #         data.append(techo_data)
+
+    # =====================================
+    # CONCAT FINAL
+    # =====================================
+    return data
 
   def set_position(self, x, y):
     self.x = x
@@ -152,7 +202,7 @@ class Aula:
     ])
 
     # 🔥 recrear muros en nueva posición
-    self.crear_muros()
+    # self.crear_muros()
 
     if self.techo:
         self.techo.set_position(x, y)

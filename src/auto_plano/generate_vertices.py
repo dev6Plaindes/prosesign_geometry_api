@@ -185,6 +185,9 @@ def generate_geometry(df_excel, df_cuadrante_max):
     sala_profesores_area = admin.aula(sala_profesores_ancho, sala_profesores_largo, description="Sala de Profesores", lado="top")
     sshh_adm_area = admin.aula(sshh_adm_ancho, sshh_adm_largo, description="SSHH Adm.", lado="top")
     admin.centrar_aulas()
+    
+    admin.create_columns_from_aulas(pos="B", heigth=5)
+    admin.create_techos()
 
     # Inicial
     aulas_ciclo1_list = [inicial.aula(ciclo1_ancho, ciclo1_largo, description="Aula Ciclo I", lado="bottom") for _ in range(ciclo1_cantidad)]
@@ -195,6 +198,9 @@ def generate_geometry(df_excel, df_cuadrante_max):
     sshh_inicial_area = inicial.aula(sshh_ancho, sshh_largo, description="SSHH Inicial", lado="bottom")
     cocina_inicial_area = inicial.aula(cocina_ancho, cocina_largo, description="Cocina Inicial", lado="bottom")
     inicial.centrar_aulas()
+    
+    inicial.create_columns_from_aulas()
+    inicial.create_techos()
 
     pas_inicial, medio, pas_admin = b.areas_m(1.4, "auto",1.4 , direccion="vertical")
 
@@ -228,8 +234,12 @@ def generate_geometry(df_excel, df_cuadrante_max):
     )
     losas.centrar_losas()
     
-    ept.aula(ancho=ancho_ept, largo=largo_ept, description="Taller EPT", lado="right")
-    ept.centrar_aulas()
+    if ept.largo >=ancho_ept:
+        ept.aula(ancho=ancho_ept, largo=largo_ept, description="Taller EPT", lado="right")
+        ept.centrar_aulas()
+        
+    ept.create_columns_from_aulas(heigth=largo_ept)
+    ept.create_techos()
     
     # # Patio de Inicial (Cerca al pabellón de inicial)
     area_losa_inic.losa(ancho=largo_patio, largo=ancho_patio, description="Patio Inicial")

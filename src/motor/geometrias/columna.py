@@ -54,7 +54,7 @@ class Columna:
         self._actualizar_geometrias()
 
     def get_data(self):
-        data = {
+        return  [{
             "ancho": self.ancho,
             "largo": self.largo,
             "altura": self.altura,
@@ -67,8 +67,7 @@ class Columna:
             "lado": self.lado,
             "geometria" : self.geometria,
             "geometria_3d" : self.geometria_3d,
-        }
-        return pd.DataFrame(data, index=[0])
+        }]
 
     def render(self, fig, color="grey", borde="black"):
         """Dibuja la planta 2D"""

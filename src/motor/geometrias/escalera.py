@@ -177,7 +177,7 @@ class Escalera:
                 "geometria_3d": geom_3d
             })
 
-        return pd.DataFrame(filas)
+        return filas
 
     def _add_box(self, fig, x, y, z, dx, dy, dz, color):
 
@@ -280,7 +280,7 @@ class Descanso():
             "geometria_3d": self.geometria_3d
         })
 
-        return pd.DataFrame(filas)
+        return filas
 
     def render_3d(self, fig=None, color='gray', opacity=1):
         if fig is None:
@@ -452,31 +452,68 @@ class EscalerasCompleta:
         return fig
 
     def get_data(self):
-        dataframes = []
 
-        # 🔷 1. Data base de la escalera completa (opcional pero recomendado)
-        data_base = pd.DataFrame({
-            "tipo": ["escalera_completa"],
-            "description": [self.description],
-            "piso_inicio": [self.piso_inicio],
-            "x": [self.x],
-            "y": [self.y],
-            "ancho": [self.ancho],
-            "largo": [self.largo],
-            "geometria": [self.geometria],
-            "geometria_3d": [None]
-        })
+        data = []
 
-        dataframes.append(data_base)
+        # =====================================
+        # 1. DATA BASE ESCALERA COMPLETA
+        # =====================================
+        data_base = {
+            "tipo": "escalera_completa",
+            "description": self.description,
+            "piso_inicio": self.piso_inicio,
+            "x": self.x,
+            "y": self.y,
+            "ancho": self.ancho,
+            "largo": self.largo,
+            "geometria": self.geometria,
+            "geometria_3d": None
+        }
 
-        # 🔥 2. Escaleras (cada tramo)
+        data.append(data_base)
+
+        # =====================================
+        # 2. ESCALERAS (TRAMOS)
+        # =====================================
         for esc in self.escaleras:
+
             if hasattr(esc, "get_data"):
-                dataframes.append(esc.get_data())
 
-        # 🔥 3. Descanso
-        if self.descanso_escalera and hasattr(self.descanso_escalera, "get_data"):
-            dataframes.append(self.descanso_escalera.get_data())
+                esc_data = esc.get_data()
 
-        # 🔗 Unir todo
-        return pd.concat(dataframes, ignore_index=True)
+                # Equivalente exacto a concat
+                if isinstance(esc_data, list):
+
+                    data.extend(esc_data)
+
+                else:
+
+                    data.append(esc_data)
+
+        # =====================================
+        # 3. DESCANSO
+        # =====================================
+        if (
+            self.descanso_escalera
+            and hasattr(
+                self.descanso_escalera,
+                "get_data"
+            )
+        ):
+
+            descanso_data = (
+                self.descanso_escalera.get_data()
+            )
+
+            if isinstance(descanso_data, list):
+
+                data.extend(descanso_data)
+
+            else:
+
+                data.append(descanso_data)
+
+        # =====================================
+        # CONCAT FINAL
+        # =====================================
+        return data

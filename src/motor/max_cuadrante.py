@@ -37,20 +37,33 @@ def maximal_rectangle(matrix):
 
     return max_area, max_rect
 
-
 # 🔷 2. Obtener ángulos candidatos (OPTIMIZACIÓN 🔥)
 def get_candidate_angles(polygon):
-    coords = list(polygon.exterior.coords)
     angles = set()
+    
+    # 1. Normalizar la entrada: si es MultiPolygon sacamos sus partes, si es Polygon lo envolvemos en una lista
+    if polygon.geom_type == 'MultiPolygon':
+        polygons_to_process = list(polygon.geoms)
+    elif polygon.geom_type == 'Polygon':
+        polygons_to_process = [polygon]
+    else:
+        return []
 
-    for i in range(len(coords) - 1):
-        dx = coords[i+1][0] - coords[i][0]
-        dy = coords[i+1][1] - coords[i][1]
-        angle = np.degrees(np.arctan2(dy, dx))
-        angles.add(round(angle % 180, 2))
+    # 2. Iterar sobre cada polígono/fragmento del terreno
+    for poly in polygons_to_process:
+        if poly.is_empty:
+            continue
+            
+        coords = list(poly.exterior.coords)
+
+        # 3. Tu lógica original aplicada a los lados de cada fragmento
+        for i in range(len(coords) - 1):
+            dx = coords[i+1][0] - coords[i][0]
+            dy = coords[i+1][1] - coords[i][1]
+            angle = np.degrees(np.arctan2(dy, dx))
+            angles.add(round(angle % 180, 2))
 
     return sorted(angles)
-
 
 # 🔷 3. Evaluar un ángulo
 def find_max_rect_for_angle(polygon, angle_deg, cell_size=0.4):
@@ -98,7 +111,6 @@ def find_max_rect_for_angle(polygon, angle_deg, cell_size=0.4):
 
     return rect_final, area_m2
 
-
 # 🔷 4. FUNCIÓN PRINCIPAL (MEJORADA 🚀)
 def find_best_rectangle(polygon, cell_size_coarse=0.5, cell_size_fine=0.2):
     best_rect = None
@@ -135,6 +147,55 @@ def find_best_rectangle(polygon, cell_size_coarse=0.5, cell_size_fine=0.2):
 
     return best_rect, best_area, best_angle
 
+def find_next_best_rectangle(polygon, previous_rect, cell_size_coarse=0.5, cell_size_fine=0.2):
+    """
+    Busca el siguiente mejor rectángulo máximo en el terreno, 
+    excluyendo el área del cuadrante máximo ya encontrado.
+    """
+    # 1. Restar el rectángulo anterior al terreno original
+    # (previous_rect debe ser un objeto Polygon de Shapely)
+    remaining_terrain = polygon.difference(previous_rect)
+    
+    # Valida que quede terreno útil para buscar
+    if remaining_terrain.is_empty:
+        print("No queda terreno disponible.")
+        return None, 0, 0
+
+    best_rect = None
+    best_area = 0
+    best_angle = 0
+
+    # 🔥 ángulos inteligentes basados en el terreno restante
+    base_angles = get_candidate_angles(remaining_terrain)
+
+    # 🔥 refinamiento fino de ángulos
+    angles = []
+    for a in base_angles:
+        angles.extend([a + d for d in np.linspace(-3, 3, 7)])
+
+    # --- PRIMERA PASADA (rápida) ---
+    for angle in angles:
+        # Buscamos en 'remaining_terrain' en lugar del polígono original
+        rect, area = find_max_rect_for_angle(remaining_terrain, angle, cell_size_coarse)
+
+        if rect and area > best_area:
+            best_rect = rect
+            best_area = area
+            best_angle = angle
+
+    # --- SEGUNDA PASADA (precisa 🔥) ---
+    if best_rect:  # Solo si se encontró algo en la primera pasada
+        fine_angles = [best_angle + d for d in np.linspace(-1, 1, 5)]
+
+        for angle in fine_angles:
+            rect, area = find_max_rect_for_angle(remaining_terrain, angle, cell_size_fine)
+
+            if rect and area > best_area:
+                best_rect = rect
+                best_area = area
+                best_angle = angle
+
+    return best_rect, best_area, best_angle
 
 def normalizar_polygon(vertices):
     """
@@ -180,8 +241,6 @@ def polygon_get_data(rect):
         "piso": [1]
     })
     
-
-
 
 def df_geom_to_dict(df):
     # 1. Copia para no afectar el original

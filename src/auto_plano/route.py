@@ -88,7 +88,6 @@ async def read_item(item_id: int):
     return {"data" : project}
 
 
-
 @router.get("/project-plane2d/{item_id}", response_class=HTMLResponse)
 async def read_item(item_id: int, piso: int = Query(1, description="Número de piso a mostrar")):
     project = obtener_proyecto_por_id(item_id)

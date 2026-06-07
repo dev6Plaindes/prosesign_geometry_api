@@ -112,31 +112,51 @@ class Pasadizo:
         return fig
 
     def get_data(self):
-        # 🔹 Data del pasadizo
-        df_pasadizo = pd.DataFrame({
-            "ancho": [self.ancho],
-            "largo": [self.largo],
-            "area": [self.area],
-            "piso": [self.piso],
-            "description": [self.description],
-            "x": [self.x],
-            "y": [self.y],
-            "tipo": ["pasadizo"],
-            "subtipo": ["circulacion"],
-            "geometria": [self.geometria],
-            "geometria_3d": [self.geometria_3d],
-        })
 
-        # 🔹 Data de muros (usando su propio get_data)
+        # =====================================
+        # DATA DEL PASADIZO
+        # =====================================
+        data = [{
+            "ancho": self.ancho,
+            "largo": self.largo,
+            "area": self.area,
+            "piso": self.piso,
+            "description": self.description,
+            "x": self.x,
+            "y": self.y,
+            "tipo": "pasadizo",
+            "subtipo": "circulacion",
+            "geometria": self.geometria,
+            "geometria_3d": self.geometria_3d,
+        }]
+
+        # =====================================
+        # MUROS
+        # =====================================
         muros = self.generar_parapeto()
 
         if not muros:
-            return df_pasadizo
 
-        df_muros = pd.concat([muro.get_data() for muro in muros], ignore_index=True)
+            return data
 
-        # 🔹 Unir todo
-        return pd.concat([df_pasadizo, df_muros], ignore_index=True)
+        # Equivalente exacto a:
+        # pd.concat([...], ignore_index=True)
+        for muro in muros:
+
+            muro_data = muro.get_data()
+
+            if isinstance(muro_data, list):
+
+                data.extend(muro_data)
+
+            else:
+
+                data.append(muro_data)
+
+        # =====================================
+        # CONCAT FINAL
+        # =====================================
+        return data
 
     def generar_parapeto(self):
       if self.piso <= 1:
@@ -189,6 +209,7 @@ class Pasadizo:
                   altura=0.95,
                   lado=lado_actual
               )
+              muro.tipo="parapeto"
 
           # crear muro vertical
           else:
@@ -203,7 +224,8 @@ class Pasadizo:
                   altura=0.95,
                   lado=lado_actual
               )
-
+              muro.tipo="parapeto"
+              
           muro.altura_piso = self.altura_piso  # 🔥 CLAVE
           muro._actualizar_geometrias()
 

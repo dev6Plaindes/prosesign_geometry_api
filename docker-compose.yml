@@ -9,10 +9,36 @@ services:
       - "8001:8001"
     volumes:
       - .:/app
-    environment:
-      - ENV=production
     networks:
       - prosupervision_network
+    depends_on:
+      - redis
+    env_file:
+      - .env
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_bim
+    command: redis-server --requirepass prodesign123
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - prosupervision_network
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: prodesign-worker
+    command: python worker.py
+    volumes:
+      - .:/app
+    networks:
+      - prosupervision_network
+    depends_on:
+      - redis
+      - geometry-api
 
 networks:
   prosupervision_network:
