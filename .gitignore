@@ -25,6 +25,7 @@ __pycache__/
 # Datos y archivos temporales
 data_ambiente.csv
 src.zip
+bim.zip
 /temp*/
 /logs/
 

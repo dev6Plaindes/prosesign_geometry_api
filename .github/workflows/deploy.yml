@@ -1,0 +1,47 @@
+name: Deploy PRODESIGN API SERVICES 2D, 3D
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1. Sincronizar archivos (evitando archivos innecesarios)
+      - name: Sincronizar archivos
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          ARGS: "-rlgoDzvc -i --delete"
+          SOURCE: "./"
+          REMOTE_HOST: ${{ secrets.SERVER_IP }}
+          REMOTE_USER: ${{ secrets.SSH_USER }}
+          TARGET: "/var/www/tu-app/"
+          EXCLUDE: "/.git/, /node_modules/, /.env, /dist/"
+
+      # 2. Comando para construir y reiniciar
+      - name: Construir y desplegar
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/tu-app/
+            
+            # Construir imagen nueva
+            docker build -t mi-app-prod .
+            
+            # Detener y borrar el contenedor viejo
+            docker stop mi-app-container || true
+            docker rm mi-app-container || true
+            
+            # Correr el nuevo
+            docker run -d --name mi-app-container --restart always --env-file .env -p 80:3000 mi-app-prod
+            
+            # Limpiar imágenes antiguas (para que el servidor no se llene de basura)
+            docker image prune -f
