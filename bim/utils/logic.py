@@ -49,7 +49,7 @@ def largos_for_piso(data, largo_total):
 
 from itertools import groupby
 
-def largos_for_piso_and_ambiente(data, largo_total):
+def largos_for_piso_and_ambiente(data, largo_total, name_pabellon):
     # Genera la distribución automática de los ambientes
     pabellon_p = auto_distribution_ambientes_y(data, largo_total)
 
@@ -58,7 +58,9 @@ def largos_for_piso_and_ambiente(data, largo_total):
         [
             {
                 "ambiente": item['Ambiente'], 
-                "largo": round(item['Largo_Individual'], 2)
+                "largo": round(item['Largo_Individual'], 2),
+                "pabellon" : name_pabellon,
+                "piso" : item['Piso']
             } 
             for item in grupo
         ]

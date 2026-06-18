@@ -10,7 +10,7 @@ services:
     volumes:
       - .:/app
     networks:
-      - prosupervision_network
+      - prodesign_network
     depends_on:
       - redis
     env_file:
@@ -24,7 +24,7 @@ services:
       - "6379:6379"
     restart: unless-stopped
     networks:
-      - prosupervision_network
+      - prodesign_network
 
   worker:
     build:
@@ -35,11 +35,11 @@ services:
     volumes:
       - .:/app
     networks:
-      - prosupervision_network
+      - prodesign_network
     depends_on:
       - redis
       - geometry-api
 
 networks:
-  prosupervision_network:
+  prodesign_network:
     external: true

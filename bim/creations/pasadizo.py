@@ -1,3 +1,4 @@
+from bim.capas import FactoryCapas
 from bim.config_proyect import CONFIG_PROYECTO
 import cadquery as cq
 
@@ -6,7 +7,8 @@ def create_corridor_slab(
     pos_x: list,       # Rango [x_init, x_end] -> ej: [5, 12]
     pos_y: list,       # Rango [y_init, y_end] -> ej: [0, 2.4]
     sufijo_nombre: str,
-    nivel: int = 1
+    nivel: int = 1,
+    factory_capas : FactoryCapas = None
 ):
     """
     Construye la losa de piso para un pasadizo basada en rangos absolutos [inicio, fin].
@@ -43,4 +45,6 @@ def create_corridor_slab(
     )
 
     # 4. Agregar directamente al ensamblaje del proyecto
-    ensamblaje.add(losa_pasadizo, name=f"Losa Pasadizo {sufijo_nombre} - Nivel {nivel}")
+    name_e = f"Losa Pasadizo {sufijo_nombre} - Nivel {nivel}"
+    ensamblaje.add(losa_pasadizo, name=name_e)
+    factory_capas.add_in_capa_auto(losa_pasadizo, nivel=nivel, name=name_e)

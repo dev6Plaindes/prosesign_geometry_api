@@ -1,10 +1,46 @@
+from dataclasses import dataclass
 import json
 
 from sqlalchemy import text
-from src.bim.schemas import Project
+from src.bim.schemas.schema_dto import Project, ProjectUpdateDTO
 from src.connection_db import connection_db
 
 engine = connection_db()
+
+
+def get_content_step(id_project : int):
+    query = text("""
+        SELECT * FROM niveles_step
+        WHERE id_project = :id_project             
+    """)
+    
+    with engine.begin() as conn:
+        result = conn.execute(
+            query, {"id_project": id_project}
+        )
+        rows = result.fetchall()
+
+        return [row._asdict() for row in rows]
+
+
+def save_content_step(id_project : int, content_step : str, nivel : int) -> None:
+    query = text("""
+        INSERT niveles_step (content_step, id_project, nivel)
+        VALUES
+        (:content_step, :id_project, :nivel)             
+    """)
+    
+    data_insert = {
+        "content_step" : content_step,
+        "id_project" : id_project,
+        "nivel" : nivel
+    }
+    
+    with engine.begin() as conn:
+        response_save = conn.execute(
+            query, data_insert
+        )
+    
 
 def insert_new_project_school(project_data: dict) -> int:
     project = Project(**project_data)
@@ -98,16 +134,31 @@ def get_all_project():
 
         return [row._asdict() for row in rows]
 
-def update_vertices_project(id, vertices: list) -> bool:
+
+def update_data_project(id: int, data_project: ProjectUpdateDTO) -> bool:
     query = text("""
         UPDATE projects 
-        SET vertices = :vertices
+        SET vertices = :vertices,
+            resumen_ambientes = :resumen_ambientes,
+            tipo_institucion = :tipo_institucion,
+            aforo = :aforo,
+            region = :region
+            
         WHERE id = :id
     """)
 
-    print("Actualizando vértices del proyecto con ID:", id)
+    print("Actualizando proyecto ID:", id)
+
     with engine.begin() as conn:
-        result = conn.execute(query, {"vertices": json.dumps(vertices), "id": id})
+        result = conn.execute(query, {
+            "id": id,
+            "vertices": json.dumps(data_project["vertices"]),
+            "resumen_ambientes": json.dumps(data_project["resumen_ambientes"]),
+            "tipo_institucion": json.dumps(data_project["tipo_institucion"]),
+            "aforo" : json.dumps(data_project["aforo"]),
+            "region" : data_project["region"]
+        })
+        
         return result.rowcount > 0
     
 def update_url_pdf_project(id, url_pdf: str) -> bool:
@@ -121,3 +172,4 @@ def update_url_pdf_project(id, url_pdf: str) -> bool:
     with engine.begin() as conn:
         result = conn.execute(query, {"url_pdf": url_pdf, "id": id})
         return result.rowcount > 0
+    

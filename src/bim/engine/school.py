@@ -1,23 +1,20 @@
-import io
-import tempfile
 
 import pandas as pd
 from bim.cuadrante_1 import cuadrante_1
-from src.bim.repository import update_status_job_project, update_vertices_project
+from src.bim.engine.utils.get_region import clasificar_region_peru
+from src.bim.schemas.schema_dto import ProjectUpdateDTO
+from src.bim.repository import save_content_step, update_data_project, update_status_job_project
 from src.motor.calculadora_sheets import procesar_y_extraer_sheets
-from bim.upload_aws_file import obtener_archivo_en_binario, subir_archivo_a_s3
+import os
+import re
+import shutil
 
 def format_vertices(vertices):
     return [[punto["x"], punto["y"]] for punto in vertices]
 
-def generate_bim(data, project_id):
-    vertices_terreno = data["vertices"]
-    vertices_terreno = format_vertices(vertices_terreno)
-    aforo_api = data["aforo"]
-
-    aforo_api = {item["grado"].lower(): item for item in aforo_api}
+def adapter_aforo(aforo_api):
     
-    df_aforo_api = pd.DataFrame({
+    return pd.DataFrame({
         "nivel": ["Inicial", "Primaria", "Secundaria"],
         "aforo_grado": [
             aforo_api["inicial"]["aforo_por_grado"], 
@@ -31,24 +28,62 @@ def generate_bim(data, project_id):
         ]
     })
 
-    # Procesar aforo y calcular
-    df_excel = procesar_y_extraer_sheets(df_aforo_api.to_dict(orient="records"), "MARIATEGUI")
-    data_builded, ensamblaje = cuadrante_1(vertices_terreno, df_excel, project_id)
-
-
-    bucket_destino = "plaindes"
-    ruta_en_s3 = f"plane_{project_id}.step"
-    ensamblaje.save(ruta_en_s3)
+def generate_bim(data, project_id):
+    vertices_terreno = data["vertices"]
+    vertices_terreno = format_vertices(vertices_terreno)
+    aforo_api = data["aforo"]
     
-    file_bytes = obtener_archivo_en_binario(ruta_en_s3)
-    archivo_binario_stream = io.BytesIO(file_bytes)
+    departamento = data["departamento"]
+    provincia = data["provincia"]
+    
+    region = clasificar_region_peru(departamento=departamento, provincia=provincia)
+    
+    
+    tipo_institucion = [item["grado"] for item in aforo_api]
+    tipo_institucion = ", ".join(tipo_institucion)
 
-    url_resultado = subir_archivo_a_s3(
-        archivo_binario=archivo_binario_stream, 
-        nombre_archivo=ruta_en_s3,
-        bucket_name=bucket_destino
+    aforo_api = {item["grado"].lower(): item for item in aforo_api}
+    
+    df_aforo_api = adapter_aforo(aforo_api)
+
+    # Procesar aforo y calcular
+    df_excel_ambientes = procesar_y_extraer_sheets(
+        datos = df_aforo_api.to_dict(orient="records"), 
+        nombre_archivo_google="MARIATEGUI"
     )
     
-    print(f"Archivo subido a S3 con URL: {url_resultado}")
+    data_builded, ensamblaje, factory_capas, RESUMEN_AREAS = cuadrante_1(vertices_terreno, df_excel_ambientes)
+
+    factory_capas.export_step_all_capas()
+    path = factory_capas.path_folder
+    
+    for file in os.listdir(path):
+        if file.lower().endswith((".step", ".stp")):
+            file_path = os.path.join(path, file)
+
+            # extraer nivel del nombre
+            match = re.search(r"_(\d+)\.[a-zA-Z0-9]+$", file)
+            nivel = match.group(1) if match else None
+
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                content_step = f.read()
+
+            save_content_step(
+                id_project=project_id,
+                content_step=content_step,
+                nivel = nivel
+            )
+            
+    if path and os.path.exists(path):
+        shutil.rmtree(path)
+    
+    data_project : ProjectUpdateDTO = {
+        "vertices" : data_builded,
+        "resumen_ambientes" : RESUMEN_AREAS,
+        "tipo_institucion": tipo_institucion,
+        "aforo" : aforo_api,
+        "region" : region
+    }
+    
     update_status_job_project(id=project_id,status="finished")
-    update_vertices_project(project_id, data_builded)
+    update_data_project(project_id, data_project)

@@ -7,6 +7,7 @@ Microservicio encargado del procesamiento geométrico avanzado y optimización d
 * **FastAPI** (Web Framework)
 * **Shapely** (Cálculos Geométricos)
 * **Pydantic** (Validación de Datos)
+* **CadQuery** (Geometria 2D 3D, y exportación STEP, SVG, DXF)
 
 ## 🛠️ Módulos Principales
 1. **Auth**: Gestión de seguridad y validación de tokens JWT.

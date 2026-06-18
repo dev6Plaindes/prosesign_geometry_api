@@ -1,7 +1,7 @@
 import cadquery as cq
 
 from bim.config_proyect import CONFIG_PROYECTO
-
+from bim.capas import FactoryCapas
 def create_balcony(
     ensamblaje,
     ancho_hab: float,
@@ -12,7 +12,8 @@ def create_balcony(
     posicion_puerta: str = "bottom",
     nivel: int = 1,
     orientacion: str = "horizontal",
-    ancho_balcon: float = 1.8
+    ancho_balcon: float = 1.8,
+    factory_capas : FactoryCapas = None
 ):
     """
     Genera e incorpora la losa de un balcón junto con su parapeto perimetral de 1.2m
@@ -22,7 +23,7 @@ def create_balcony(
     altura_piso = CONFIG_PROYECTO['alto_nivel']
     e_muro = CONFIG_PROYECTO['e_muro']
 
-    # 🛑 Validación base: Los balcones solo se construyen a partir del nivel 2
+    # Validación base: Los balcones solo se construyen a partir del nivel 2
     if nivel < 2:
         return
 
@@ -105,5 +106,8 @@ def create_balcony(
         balcon_completo = balcon_completo.rotate(pivote, (desplazamiento_x, desplazamiento_y, 1), 90)
 
     # 6. Registrar en el ensamblaje general
-    ensamblaje.add(balcon_completo, name=f"Balcon {sufijo_nombre} - Nivel {nivel}")
+    name_balcon = f"Balcon {sufijo_nombre} - Nivel {nivel}"
+    ensamblaje.add(balcon_completo, name=name_balcon)
+    
+    factory_capas.add_in_capa_auto(balcon_completo, nivel=nivel, name=name_balcon)
     

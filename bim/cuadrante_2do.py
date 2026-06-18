@@ -103,7 +103,8 @@ def build_2do_cuad(data_dict_ambientes = [], cuadrante : Polygon = None, factory
             pos_x=pos_patio,
             pos_y=pos_centro_patio_inicial,
             sufijo_nombre="Patio Inicial",
-            nivel=1
+            nivel=1,
+            factory_capas=factory_capas
         )
     max_nivel_inicial = len(largos_inicial)
     for index, largo_inicial in enumerate(largos_inicial):
@@ -144,7 +145,8 @@ def build_2do_cuad(data_dict_ambientes = [], cuadrante : Polygon = None, factory
             largo_bloque_fijo=sum_largos_inicial,
             posicion_puerta=pos_puerta,    # Se acoplará automáticamente al lado superior
             nivel=nivel,
-            orientacion="vertical"    # Rotará usando el mismo pivote (10.0, 5.0)
+            orientacion="vertical",    # Rotará usando el mismo pivote (10.0, 5.0)
+            factory_capas=factory_capas
         )
 
     create_corridor_slab(
@@ -152,7 +154,8 @@ def build_2do_cuad(data_dict_ambientes = [], cuadrante : Polygon = None, factory
         pos_x=pas_inicial,
         pos_y=area_inicial,
         sufijo_nombre="Inicial",
-        nivel=1
+        nivel=1,
+        factory_capas=factory_capas
     )
     sum_amb = [
         row

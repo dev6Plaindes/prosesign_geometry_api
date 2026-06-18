@@ -43,7 +43,7 @@ RUN google-chrome --version
 COPY . .
 
 # Compilamos los archivos de Cython (.pyx -> .so de Linux)
-RUN python setup.py build_ext --inplace
+# RUN python setup.py build_ext --inplace
 
 # Puerto expuesto
 EXPOSE 8001

@@ -1,6 +1,5 @@
 import re
 import cadquery as cq
-import cadquery_png_plugin.plugin
 from PIL import Image
 
 def exportar_niveles_a_pdf(ruta_step="formato_prueba.step", pdf_salida="planos_por_nivel.pdf"):
@@ -129,9 +128,3 @@ def exportar_niveles_a_pdf(ruta_step="formato_prueba.step", pdf_salida="planos_p
 
     # print(f"PDF generado: {pdf_salida}")
     return pdf_salida
-
-# ==========================================
-# Ejecución del script
-# ==========================================
-if __name__ == "__main__":
-    exportar_niveles_a_pdf()

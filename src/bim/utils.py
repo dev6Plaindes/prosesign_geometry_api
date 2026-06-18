@@ -9,3 +9,5 @@ def div_logic(medidas: List[Union[int, float, str]], medida_total: float) -> Lis
     valor_auto = (medida_total - suma_fijos) / cantidad_auto if cantidad_auto > 0 else 0
 
     return [valor_auto if m == "auto" else m for m in medidas]
+
+

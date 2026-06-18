@@ -4,15 +4,12 @@ from bim.calculate import calcular_desplazamiento_y, calcular_rango_centrado
 from bim.capas import FactoryCapas
 from bim.config_proyect import CONFIG_PROYECTO
 from bim.creations.balcony import create_balcony
-from bim.creations.base_construction import ComponenteConstruccion
 from bim.creations.base_structure import create_structure
 from bim.creations.pasadizo import create_corridor_slab
 from bim.creations.techo import generate_techo
-from bim.upload_aws_file import subir_archivo_a_s3
 from bim.utils.logic import (
     acumulate_coords,
     div_logic,
-    largos_for_piso,
     largos_for_piso_and_ambiente,
     translate_norm,
 )
@@ -29,9 +26,9 @@ from src.motor.max_cuadrante import (
     find_next_best_rectangle,
     normalizar_polygon,
 )
+from cadquery import Assembly
 
-
-def cuadrante_1(vertices_terreno, df_excel):
+def cuadrante_1(vertices_terreno, df_excel) -> tuple[list, Assembly, FactoryCapas]:
 
     terreno_poly = normalizar_polygon(vertices_terreno)
 
@@ -62,7 +59,8 @@ def cuadrante_1(vertices_terreno, df_excel):
         ancho_terreno, largo_terreno = largo_terreno, ancho_terreno
         print("aplicando angulo")
         best_angle += 90
-        y_min_absoluto = y_max_absoluto
+        # y_min_absoluto = y_max_absoluto
+        x_min_absoluto = x_max_absoluto
 
     CONFIG_PROYECTO["largo_cuadrante"] = largo_terreno
     CONFIG_PROYECTO["ancho_cuadrante"] = ancho_terreno
@@ -128,13 +126,13 @@ def cuadrante_1(vertices_terreno, df_excel):
     # ==================================================================================
     # INICIALIZACION CAPAS
     ensamblaje_niveles = cq.Assembly(name="Emsamblaje por capas")
-    degree_test = 15
     factory_capas = FactoryCapas(
         ensamblaje=ensamblaje_niveles,
         degree_referencia=best_angle,
         x_referencia=x_min_absoluto,
         y_referencia=y_min_absoluto
     )
+    
 
     # ==================================================================================
     # 5. DIVISIONES SECUNDARIAS Y POSICIONES DE LOS AMBIENTES
@@ -292,6 +290,7 @@ def cuadrante_1(vertices_terreno, df_excel):
             largo_bloque_fijo=sum_largos_primaria,
             posicion_puerta=posicion_puerta,  # Se acoplará automáticamente al lado superior
             nivel=nivel,
+            factory_capas=factory_capas
         )
 
     # Pasadizo Primaria
@@ -341,6 +340,7 @@ def cuadrante_1(vertices_terreno, df_excel):
             largo_bloque_fijo=sum_largos_sec,
             posicion_puerta="bottom",  # Se acoplará automáticamente al lado superior
             nivel=nivel,
+            factory_capas=factory_capas
             # orientacion="vertical"    # Rotará usando el mismo pivote (10.0, 5.0)
         )
 
@@ -444,6 +444,7 @@ def cuadrante_1(vertices_terreno, df_excel):
                 posicion_puerta=pos_puerta,
                 nivel=nivel,
                 orientacion="vertical",
+                factory_capas=factory_capas
             )
 
         create_corridor_slab(
@@ -498,6 +499,7 @@ def cuadrante_1(vertices_terreno, df_excel):
             posicion_puerta="top",  # Se acoplará automáticamente al lado superior
             nivel=nivel,
             orientacion="vertical",  # Rotará usando el mismo pivote (10.0, 5.0)
+            factory_capas=factory_capas
         )
 
     create_corridor_slab(
