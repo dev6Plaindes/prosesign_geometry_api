@@ -15,5 +15,5 @@ class ResponseGenerateProject(BaseModel):
     job_id : str
     
 class ResponseGetJob(BaseModel):
-    id : int
+    id : str
     status : str

@@ -36,7 +36,7 @@ def generate_project(data: ProjectRequest):       # OK
     return service
 
 @router.get("/jobs/{job_id}", response_model=ResponseGetJob) # OK
-def get_job(job_id: int):
+def get_job(job_id: str):
     service = service_get_job(job_id)
     return service
 
