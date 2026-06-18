@@ -1,14 +1,12 @@
 import os
+from pathlib import Path
 from fastapi import HTTPException, status
-from src.motor.calculadora_sheets import procesar_y_extraer_sheets, procesar_y_extraer_sheets_costos
-from src.bim.engine.utils.get_region import clasificar_region_peru
-from src.bim.report_pdf.school_report_pdf import SchoolReportePDF, analizar_pisos_pabellon, calcular_total_alumnos, limpiar_archivos, transform_areas
-from src.bim.convert.stepToSVG import procesar_archivos_step_a_svg
-from src.bim.schemas.schema_dto import NivelesStepDTO
-from bim.upload_aws_file import subir_archivo_a_s3
+from matplotlib.font_manager import json_dump
+from src.bim.pipeline.project_school.create.main_pipeline import generate_project_school_pipeline
+from src.bim.schemas.project_schema import ProjectRequest
+from src.bim.schemas.schema_dto import ProjectDataForReport
 from src.bim.schemas.schema_response import ResponseGenerateProject, ResponseGetJob
-from src.bim.engine.school import adapter_aforo, generate_bim
-from src.bim.repository import get_content_step, get_project_by_id, insert_new_project_school, update_status_job_project, update_url_pdf_project
+from src.bim.repository import create_new_version_project, get_project_by_id, insert_new_project_school, update_status_job_project
 from rq import Queue
 from redis_conn import redis_conn
 from rq.job import Job
@@ -16,40 +14,42 @@ from rq.exceptions import NoSuchJobError
 from secrets import token_hex
 import json
 from dotenv import load_dotenv
-
+from src.bim.pipeline.project_school.report_pdf.main_pipeline import report_pdf_pipeline
 load_dotenv()
 
 q = Queue("prodesign:bim:school", connection=redis_conn)
 
-def service_generate_costos_infraestructue(id_project):
+def service_generate_costos_infraestructue(id_project, data_form_costos):
     project_data = get_project_by_id(id_project)
 
-    aforo = project_data["aforo"]
-    aforo_json = json.loads(aforo)
-    df_aforo_api = adapter_aforo(aforo_json)
-    datos = df_aforo_api.to_dict(orient="records")
-
-    df_excel_infra = procesar_y_extraer_sheets_costos(
-        datos = datos,
-        nombre_archivo_google="COSTOS_INFRAESTRUCTURA"
-    )
-
-    # COSTOS_INFRAESTRUCTURA
     return {
-        "calculo_infraestructura" : aforo
+        "calculo_infraestructura" : ""
     }
 
-def service_generate_project(data : dict) -> ResponseGenerateProject:
-    id_v1_project_school = insert_new_project_school(data)
+def service_generate_project(request_data : ProjectRequest) -> ResponseGenerateProject:
     
-    job = q.enqueue(generate_bim, data, id_v1_project_school, job_timeout=150)
+    id_new_project = insert_new_project_school(request_data)
 
-    update_status_job_project(
-        id=id_v1_project_school, status="processing", job_id=job.id
+    id_new_v_project = create_new_version_project(request_data, id_new_project)
+
+    # generate_project_school_pipeline(
+    #     request_data=data_project,
+    #     id_parent_project= id_new_project,
+    #     id_version_project=id_new_v_project
+    # )
+    job = q.enqueue(
+        generate_project_school_pipeline, 
+        request_data, 
+        id_new_project,
+        id_new_v_project,
+        job_timeout=160
     )
 
-    return {"job_id": job.id, "project_id": id_v1_project_school}
+    update_status_job_project(
+        id=id_new_v_project, status="processing", job_id=job.id
+    )
 
+    return {"job_id": job.id, "project_id": id_new_v_project}
 
 def service_get_job(job_id : int) -> ResponseGetJob:
     try:
@@ -95,84 +95,32 @@ def service_get_job(job_id : int) -> ResponseGetJob:
 
     
 def service_generate_pdf_project(project_id : int):
-    project_data = get_project_by_id(project_id)
-    code_id = token_hex(6)
-    new_path_files = f"temp_{code_id}"
-    
-    if not project_data:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Project with id {project_id} not found",
-        )
+    data_project = get_project_by_id(project_id)
 
-    # Definición de nombres de archivos locales
-    AWS_PATH_FILES = os.getenv("AWS_PATH_FILES", "prodesign/test/")
-    nombre_archivo_pdf = f"{AWS_PATH_FILES}plane_{project_id}.pdf"
+    path = Path("data_project_payload.json")
     
-    bucket_name = "plaindes"
-
-    # 1. Obtener los steps desde la bd
-    steps : list[NivelesStepDTO] = get_content_step(id_project=project_id)
-    
-    os.makedirs(new_path_files, exist_ok=True)
-    
-    # guardar cada STEP como archivo
-    for step in steps:
-        content_step = step["content_step"]  # o step.content_step si es objeto
-        nivel = step.get("nivel", "unknown")
-
-        file_name = f"MODELO_3D_CAPA_{nivel}.step"
-        file_path = os.path.join(new_path_files, file_name)
-
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(content_step)
-    
-    procesar_archivos_step_a_svg(new_path_files)
-    
-    data_raw = project_data["resumen_ambientes"]
-    aforo = project_data["aforo"]
-    total_alumnos = calcular_total_alumnos(json.loads(aforo))
-    
-    project_data["total_alumnos"] = total_alumnos
-    
-    
-    # PISOS PABELLON
-    # {
-    #     "inicial": 2,
-    #     "primaria": 1,
-    #     "secundaria": 1,
-    #     "admin": 1
-    # }
-    project_data["pisos_pabellon"] = analizar_pisos_pabellon(project_data["resumen_ambientes"])
-
-    if isinstance(data_raw, str):
-        data_raw = json.loads(data_raw)
-        data_raw = transform_areas(data_raw)
-    
-    pdf = SchoolReportePDF(data_project=project_data, output_path=f"reporte_{code_id}.pdf")
-    
-    pdf.portada()
-    pdf.info_project()
-    pdf.add_svgs_from_folder(folder_path=new_path_files)
-    pdf.add_area_summary_table(data_raw)
-    archivo_binario  =  pdf.save_to_bin()
-    
-    url_resultado = subir_archivo_a_s3(
-        archivo_binario=archivo_binario,
-        nombre_archivo=nombre_archivo_pdf,
-        bucket_name=bucket_name,
+    path.write_text(
+        json.dumps(data_project, default=str, indent=4),
+        encoding="utf-8"
     )
     
-    update_url_pdf_project(project_id, url_resultado)
+    data_project["aforo"] = json.loads(data_project["aforo"])
+    data_project["resumen_ambientes"] = json.loads(data_project["resumen_ambientes"])
+
+    data_for_report = ProjectDataForReport(**data_project)
+
+    url_resultado = report_pdf_pipeline(data_for_report)
     
-    # limpiar_archivos(
-    #     pdf_path=f"reporte_{code_id}.pdf",
-    #     folder_path=new_path_files
-    # )
-    
+    if url_resultado :
+        return {
+                "status": "success",
+                "url_pdf" : url_resultado, 
+                "id_project": project_id
+            }
+
     return {
-        "status": "success",
-        "url_pdf" : url_resultado, 
+        "status": "failed",
+        "url_pdf" : None, 
         "id_project": project_id
     }
     

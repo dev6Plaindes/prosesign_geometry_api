@@ -21,13 +21,13 @@ from bim.utils.step_to_json import (
 from bim.cuadrante_2do import build_2do_cuad
 
 from bim.utils.transform_referencia import transformar_escena_con_referencia
-from src.motor.max_cuadrante import (
+from bim.max_cuadrante import (
     find_best_rectangle,
     find_next_best_rectangle,
     normalizar_polygon,
 )
 
-def cuadrante_1(vertices_terreno, df_excel):
+def cuadrante_1(vertices_terreno, data_dict_ambientes):
 
     terreno_poly = normalizar_polygon(vertices_terreno)
     RESUMEN_AREAS = []
@@ -82,8 +82,6 @@ def cuadrante_1(vertices_terreno, df_excel):
 
     # ==================================================================================
     # 3. MEDIDAS DE LOS AMBIENTES
-
-    data_dict_ambientes = df_excel.to_dict(orient="records")
 
     # ==================================================================================
     # 4. DIVISIONES PRINCIPALES Y POSICIONES DE LOS PABELLONES
@@ -245,7 +243,7 @@ def cuadrante_1(vertices_terreno, df_excel):
         .translate((
             largo_cuadrante/2,
             ancho_cuadrante/2,
-            alto/2
+            -0.1
         ))
     )
 
@@ -329,7 +327,7 @@ def cuadrante_1(vertices_terreno, df_excel):
             largos_habitaciones=largos_sec,
             ancho_hab=ancho_inferior,
             desplazamiento_x=pos_centro_secundaria,
-            desplazamiento_y=desplazamiento_y_sup,
+            desplazamiento_y=pas_sec[1],
             largo_bloque_fijo=sum(largos_sec),
             sufijo_nombre="Secundaria Techo",
             nivel=nivel,
@@ -539,9 +537,6 @@ def cuadrante_1(vertices_terreno, df_excel):
     RESUMEN_AREAS.append({"secundaria" : largos_secundaria})
     RESUMEN_AREAS.append({"admin" : largos_admin})
     
-    
-    print(RESUMEN_AREAS)
-
     cuadrante_max_and_terreno = []
     # cuadrante_max_and_terreno.extend(resultado_array)
     cuadrante_max_and_terreno.extend(max_cuadrante_array)

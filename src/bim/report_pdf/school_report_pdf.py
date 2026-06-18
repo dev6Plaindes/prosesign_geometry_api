@@ -6,7 +6,7 @@ from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPDF
-from utils.logger import logger
+from src.utils.logger import logger
 from io import BytesIO
 
 from reportlab.lib.pagesizes import A4, landscape
@@ -57,27 +57,21 @@ def _build_title(nivel: str) -> str:
     }
     return mapping.get(nivel, f"Plano arquitectónico del nivel {nivel}")
 
-from typing import Dict, Any
+from typing import List, Dict, Any
 
-def calcular_total_alumnos(aforo: Dict[str, Dict[str, Any]]) -> int:
+def calcular_total_alumnos(aforo: List[Dict[str, Any]]) -> int:
     return sum(
-        data["cantidad_aulas"] * data["aforo_por_grado"]
-        for data in aforo.values()
+        item["cantidad_aulas"] * item["aforo_por_grado"]
+        for item in aforo
     )
     
-import json
-from typing import Dict, Any
-
 def analizar_pisos_pabellon(resumen_ambientes: str) -> Dict[str, int]:
     """
     Retorna número de pisos por pabellón a partir del JSON string.
     """
-
-    data = json.loads(resumen_ambientes)  # 1️⃣ string -> lista de dicts
-
     resultado = {}
 
-    for bloque in data:
+    for bloque in resumen_ambientes:
         for pabellon, grupos in bloque.items():
 
             # grupos = [[piso1_items], [piso2_items], ...]

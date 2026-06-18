@@ -73,6 +73,13 @@ ESTILOS = {
         "fill_color": None,
         "legend": False,
     },
+    "Cuadrante": {
+        "line_color": "gray",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": None,
+        "legend": False,
+    },
     "Terreno": {
         "line_color": "gray",
         "line_width": 1,

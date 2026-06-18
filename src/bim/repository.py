@@ -1,12 +1,14 @@
 from dataclasses import dataclass
 import json
 
-from sqlalchemy import text
+from sqlalchemy import func, insert, text
+from src.bim.models.project_model import ProjectDB
+from src.bim.schemas.project_schema import ProjectRequest
 from src.bim.schemas.schema_dto import Project, ProjectUpdateDTO
 from src.connection_db import connection_db
+from src.utils.logger import logger
 
 engine = connection_db()
-
 
 def get_content_step(id_project : int):
     query = text("""
@@ -14,7 +16,7 @@ def get_content_step(id_project : int):
         WHERE id_project = :id_project             
     """)
     
-    with engine.begin() as conn:
+    with engine.connect() as conn:
         result = conn.execute(
             query, {"id_project": id_project}
         )
@@ -40,45 +42,39 @@ def save_content_step(id_project : int, content_step : str, nivel : int) -> None
         response_save = conn.execute(
             query, data_insert
         )
-    
-
-def insert_new_project_school(project_data: dict) -> int:
-    project = Project(**project_data)
-
-    query = text("""
-            INSERT projects (name, zone, distrito, provincia, departamento, ubication, user_id, manager, parent_id, client, created_at, updated_at)
-            VALUES
-            (:name, :zone, :distrito, :provincia, :departamento, :ubication, :user_id, :manager, :parent_id, :cliente, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        """)
-    
-    data_insert = {
-                "name": project.name,
-                "zone": project.zone,
-                "distrito": project.distrito,
-                "provincia": project.provincia,
-                "departamento": project.departamento,
-                "ubication": project.departamento,
-                "user_id": 3,
-                "manager": project.responsable,
-                "parent_id": 0,
-                "cliente": project.cliente
-            }
-
-    with engine.begin() as conn:
-        result_project = conn.execute(
-            query,
-            data_insert
-        )
-
-        id_project = result_project.lastrowid
         
-        data_insert["parent_id"] = id_project
-        v1_project = conn.execute(
-            query,
-            data_insert
-        )
-        id_v1_project = v1_project.lastrowid
-    return id_v1_project
+
+def insert_new_project_school(project: ProjectRequest, parent_id=None) -> int:
+    data_req = project.model_dump()
+    
+    data_req["vertices_terreno_utm"] = data_req.pop("vertices")
+    data_req["client"] = data_req.pop("cliente")
+    data_req["manager"] = data_req.pop("responsable")
+    data_req["ubication"] = data_req.get("departamento")
+    
+    data_req["created_at"] = func.now()
+    data_req["updated_at"] = func.now()
+    if parent_id != None:
+        
+        data_req["parent_id"] = parent_id
+    
+    with engine.begin() as conn:
+        logger.info("GUARDANDO DATOS INICIALES DEL PROYECTO COLEGIO...")
+        
+        stmt = insert(ProjectDB).values(**data_req)
+        result = conn.execute(stmt)
+        
+        id_new_project = result.inserted_primary_key[0]
+        
+        logger.info("DATOS INICIALES GUARDADO")
+        logger.info(f"ID DEL NUEVO PROYECTO: {id_new_project}")
+        
+    return id_new_project
+
+def create_new_version_project(project: ProjectRequest, parent_id : int):
+    logger.info(f"GUARDANDO NUEVA VERSION DEL PROYECTO ID: {parent_id}")
+    id_new = insert_new_project_school(project, parent_id=parent_id)
+    return id_new
 
 
 def update_status_job_project(id, status, job_id=None) -> bool:
@@ -115,7 +111,7 @@ def get_project_by_id(id):
         LIMIT 1
     """)
 
-    with engine.begin() as conn:
+    with engine.connect() as conn:
         result = conn.execute(query, {"id": id})
         row = result.fetchone()
 
@@ -128,7 +124,7 @@ def get_all_project():
         SELECT * FROM projects
     """)
 
-    with engine.begin() as conn:
+    with engine.connect() as conn:
         result = conn.execute(query)
         rows = result.fetchall()
 
@@ -172,4 +168,48 @@ def update_url_pdf_project(id, url_pdf: str) -> bool:
     with engine.begin() as conn:
         result = conn.execute(query, {"url_pdf": url_pdf, "id": id})
         return result.rowcount > 0
+
+def update_data_calculo_costos_project(id, data_calculo_costos : list[dict]):
+
+    query = text("""
+        UPDATE projects 
+        SET data_calculo_costos = :data_calculo_costos
+        WHERE id = :id
+    """)
+
+    with engine.begin() as conn:
+        result = conn.execute(query, {"data_calculo_costos": data_calculo_costos, "id": id})
+        return result.rowcount > 0
     
+def create_data_calculo_costos_project(id, data_calculo_costos : list[dict]):
+
+    query = text("""
+        INSERT INTO costos_project (id_project, data_calculo_costos)
+        VALUES (:id_project, :data_calculo_costos)
+    """)
+
+    with engine.begin() as conn:
+        result = conn.execute(query, {"data_calculo_costos": data_calculo_costos, "id_project": id})
+        return result.rowcount > 0
+
+def get_data_calculo_costos_project(id : int):
+    query = text("""
+        SELECT data_calculo_costos, id_project
+        FROM costos_project 
+        WHERE id_project = :id_project
+    """)
+
+    with engine.connect() as conn:
+        result = conn.execute(query, {"id_project": id})
+        rows = result.fetchall()
+        
+        processed_rows = []
+        for row in rows:
+            row_dict = row._asdict()
+            # Convertimos la columna de texto a formato JSON (lista/dict de Python)
+            if row_dict['data_calculo_costos']:
+                row_dict['data_calculo_costos'] = json.loads(row_dict['data_calculo_costos'])
+            
+            processed_rows.append(row_dict)
+            
+        return processed_rows

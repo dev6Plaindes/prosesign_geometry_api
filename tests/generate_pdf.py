@@ -1,0 +1,3 @@
+from src.bim.services import service_generate_pdf_project
+
+service_generate_pdf_project(786)

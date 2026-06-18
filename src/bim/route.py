@@ -2,6 +2,11 @@ import base64
 import json
 from fastapi import APIRouter, Body
 from fastapi.responses import HTMLResponse
+from bim.render import save_render_image
+from src.bim.pipeline.project_school.costos.main_pipeline import calculate_costos_pipeline
+from src.bim.schemas.project_schema import ProjectRequest
+from src.bim.schemas.schema_dto import ProjectDataForCostos
+from src.bim.schemas.schema_request import CostosRequest
 from src.bim.services import service_generate_costos_infraestructue, service_generate_pdf_project, service_generate_project, service_get_job
 from src.bim.schemas.schema_response import ProjectPDFResponse, ResponseGenerateProject, ResponseGetJob
 from bim.render_2d import (
@@ -10,10 +15,11 @@ from bim.render_2d import (
 from bim.render_3d import render_3d
 from bim.render_wrap import wrap_plotly_figure_in_html
 from bim.utils.step_to_json import datos_to_shapely
-from src.motor.services.gemini_nanobanana import GeminiNanoBananaService
-from src.motor.render import save_render_image
+from src.bim.adapters.gemini_nanobanana import GeminiNanoBananaService
+
 from src.bim.repository import (
     get_all_project,
+    get_data_calculo_costos_project,
     get_project_by_id,
 )
 from fastapi import APIRouter, HTTPException, status
@@ -21,20 +27,47 @@ import os
 
 router = APIRouter()
 
-@router.post("/generate-costos-project/{id_project}")
-def generate_costos_project(id_project : int):
-    service = service_generate_costos_infraestructue(id_project)
-    return service
-
-@router.post("/generate-project", response_model=ResponseGenerateProject)
-def generate_project(data: dict = Body(...)):
+@router.post(
+    "/generate-project", 
+    response_model=ResponseGenerateProject
+)
+def generate_project(data: ProjectRequest):       # OK
     service = service_generate_project(data)
     return service
 
-@router.get("/jobs/{job_id}", response_model=ResponseGetJob)
+@router.get("/jobs/{job_id}", response_model=ResponseGetJob) # OK
 def get_job(job_id: int):
     service = service_get_job(job_id)
     return service
+
+@router.get("/project/costos/{project_id}") # OK
+def get_costos_project(project_id: int):
+    data = get_data_calculo_costos_project(project_id)
+    
+    return {
+        "data" : data
+    }
+    
+@router.post("/project/costos/{project_id}")
+def create_costos_project(project_id: int, data_req : CostosRequest):
+    project_data = get_project_by_id(project_id)
+
+    project_data["aforo"] = json.loads(project_data["aforo"])
+    project_data["resumen_ambientes"] = json.loads(project_data["resumen_ambientes"])
+    project_data_model = ProjectDataForCostos(**project_data)
+
+    data = calculate_costos_pipeline(
+        data_req=data_req,
+        data_project=project_data_model
+    )
+    
+    return {
+        "data" : {
+            "data_calculo_costos" : [json.loads(data)],
+            "id_project" : project_id
+        }
+    }
+    
 
 @router.get("/project/{project_id}", status_code=status.HTTP_200_OK)
 def get_project(project_id: int):

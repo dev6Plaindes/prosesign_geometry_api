@@ -9,5 +9,9 @@ DB_NAME = os.getenv("DB_NAME", "db_arquitectura")
 
 DATABASE_URL = f"mysql+mysqlconnector://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 def connection_db():
-    engine = create_engine(DATABASE_URL)
+    
+    engine = create_engine(
+        DATABASE_URL,
+        pool_pre_ping=True
+        )
     return engine

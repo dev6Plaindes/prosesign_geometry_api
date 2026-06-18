@@ -24,6 +24,7 @@ def render_3d(
         "Patio": "rgb(1, 130, 3)",
         "Pasadizo": "rgb(183,183,183)",
         "Losa": "rgb(34,41,47)",
+        "Cuadrante": "rgb(34,41,47)",
         "Puerta": "rgb(43,23,13)",
     }
 

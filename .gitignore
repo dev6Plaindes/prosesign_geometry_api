@@ -1,6 +1,6 @@
 .env
+.env.production
 venv
-__pycache__
 hip-service-491917-s6-4e534bb75127.json
 
 data_ambiente.csv
@@ -9,4 +9,26 @@ src.zip
 /renders_ai
 /notebooks
 /temp*/
-/refactor
+/logs
+/.pytest_cache
+
+
+# Caché de Python
+__pycache__/
+*.py[cod]
+*$py.class
+/__pycache__
+# Archivos de configuración o secretos
+*.json
+!/config/tu_configuracion_permitida.json # Opcional: Des-ignora un archivo específico si lo necesitas
+
+# Datos y archivos temporales
+data_ambiente.csv
+src.zip
+/temp*/
+/logs/
+
+# Carpetas de procesamiento y resultados
+/renders/
+/renders_ai/
+/notebooks/
