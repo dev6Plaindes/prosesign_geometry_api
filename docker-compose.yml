@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     container_name: prodesign-geometry-api
     ports:
-      - "8001:8001"
+      - "8006:8001"
     volumes:
       - .:/app
     networks:
@@ -24,7 +24,7 @@ services:
       - "6379:6379"
     restart: unless-stopped
     networks:
-      - prodesign_network
+      - prodesign_network 
 
   worker:
     build:
