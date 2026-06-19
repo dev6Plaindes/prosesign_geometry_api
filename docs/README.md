@@ -38,8 +38,7 @@ La arquitectura del servicio está diseñada para permitir la incorporación fut
 | FastAPI | Exposición de servicios REST |
 | Shapely | Procesamiento y cálculos geométricos |
 | Pydantic | Validación y definición de modelos |
-| CadQuery | Generación de geometría 2D y 3D |
-| QueryCAD | Construcción y consulta de modelos geométricos |
+| CadQuery | Generación de geometría 2D y 3D, construcción y consulta de modelos geométricos |
 | Plotly | Renderizado interactivo de geometrías, vértices y shapes generados |
 | Docker | Contenerización del servicio |
 | GitHub Actions | Automatización CI/CD |
@@ -66,9 +65,6 @@ Tipo de infraestructura actual:
 
 Tipos de infraestructura proyectados:
 
-- Hospitales.
-- Centros de salud.
-- Oficinas.
 - Otros modelos arquitectónicos.
 
 ---
