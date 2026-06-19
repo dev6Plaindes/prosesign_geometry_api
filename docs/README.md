@@ -10,8 +10,6 @@ Actualmente el servicio está orientado a la generación de infraestructura educ
 
 La arquitectura del servicio está diseñada para permitir la incorporación futura de nuevos tipos de infraestructura como:
 
-- Sector salud.
-- Oficinas.
 - Infraestructura pública.
 - Otros tipos de edificaciones.
 
