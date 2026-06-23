@@ -1,4 +1,5 @@
 import cadquery as cq
+from shapely import Polygon
 from bim.adapters.shapely_to_cq import obtener_referencia_cuadrante, shapely_a_cadquery
 from bim.calculate import calcular_desplazamiento_y, calcular_rango_centrado
 from bim.capas import FactoryCapas
@@ -26,20 +27,26 @@ from bim.max_cuadrante import (
     find_next_best_rectangle,
     normalizar_polygon,
 )
+from src.bim.schemas.project_schema import DictTerrenoMaxCuad
 
-def cuadrante_1(vertices_terreno, data_dict_ambientes):
+def cuadrante_1(vertices_terreno, data_dict_ambientes, data_dict_cuadrante : DictTerrenoMaxCuad=None):
 
     terreno_poly = normalizar_polygon(vertices_terreno)
     RESUMEN_AREAS = []
     # ==================================================================================
     # 1. MAXIMO CUADRANTE
-    best_rect, best_area, best_angle = find_best_rectangle(terreno_poly)
     
-    cuadrante_1_cq = shapely_a_cadquery(best_rect)
     x_ref, y_ref = obtener_referencia_cuadrante(
         best_rect,
         best_angle
     )
+    
+    if data_dict_cuadrante!=None:
+        best_angle = data_dict_cuadrante["angle_max_cuadrante"]
+        best_rect = Polygon(data_dict_cuadrante["vertices"]["maximo_cuadrante"])
+    else:
+        best_rect, best_area, best_angle = find_best_rectangle(terreno_poly)
+        cuadrante_1_cq = shapely_a_cadquery(best_rect)
     
     # resultado_array = terreno_a_mesh_array(vertices_terreno)
     max_cuadrante_array = polygon_a_mesh_array(best_rect, "max_cuadrante")

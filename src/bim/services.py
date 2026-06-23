@@ -3,7 +3,7 @@ from pathlib import Path
 from fastapi import HTTPException, status
 from matplotlib.font_manager import json_dump
 from src.bim.pipeline.project_school.create.main_pipeline import generate_project_school_pipeline
-from src.bim.schemas.project_schema import ProjectRequest
+from src.bim.schemas.project_schema import ProjectRequest, ProjectRequestMaxCuad
 from src.bim.schemas.schema_dto import ProjectDataForReport
 from src.bim.schemas.schema_response import ResponseGenerateProject, ResponseGetJob
 from src.bim.repository import create_new_version_project, get_project_by_id, insert_new_project_school, update_status_job_project
@@ -26,7 +26,7 @@ def service_generate_costos_infraestructue(id_project, data_form_costos):
         "calculo_infraestructura" : ""
     }
 
-def service_generate_project(request_data : ProjectRequest) -> ResponseGenerateProject:
+def service_generate_project(request_data : ProjectRequestMaxCuad) -> ResponseGenerateProject:
     
     id_new_project = insert_new_project_school(request_data)
 

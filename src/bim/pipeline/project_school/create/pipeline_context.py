@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from bim.capas import FactoryCapas
-from src.bim.schemas.project_schema import ProjectRequest
+from src.bim.schemas.project_schema import ProjectRequestMaxCuad
 from typing import TypedDict
 
 class TypeSteps(TypedDict):
@@ -11,7 +11,7 @@ class TypeSteps(TypedDict):
 @dataclass
 class PipelineContext:
     id_project: int # id de la version del proyecto
-    request: ProjectRequest
+    request: ProjectRequestMaxCuad
     region: str | None = None
     ambientes : list[dict] | None = None
     resumen_ambientes : list[dict] | None = None

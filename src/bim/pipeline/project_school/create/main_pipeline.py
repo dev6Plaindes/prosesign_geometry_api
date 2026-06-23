@@ -7,10 +7,10 @@ from src.bim.pipeline.project_school.create.pipeline_context import PipelineCont
 from src.bim.pipeline.project_school.create.stage_convert_plane_and_save import stage_convert_plane_and_save
 from src.bim.pipeline.project_school.create.stage_get_ambientes import stage_get_ambientes
 from src.bim.pipeline.project_school.create.stage_update_data_project import stage_update_data_project
-from src.bim.schemas.project_schema import ProjectRequest
+from src.bim.schemas.project_schema import ProjectRequestMaxCuad
 
 def generate_project_school_pipeline(
-    request_data : ProjectRequest,
+    request_data : ProjectRequestMaxCuad,
     id_parent_project : int,
     id_version_project : int
     ):

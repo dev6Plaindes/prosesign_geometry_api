@@ -46,11 +46,12 @@ def save_content_step(id_project : int, content_step : str, nivel : int) -> None
 
 def insert_new_project_school(project: ProjectRequest, parent_id=None) -> int:
     data_req = project.model_dump()
-    
+    # excluir terreno_maximo_cuadrante
     data_req["vertices_terreno_utm"] = data_req.pop("vertices")
     data_req["client"] = data_req.pop("cliente")
     data_req["manager"] = data_req.pop("responsable")
     data_req["ubication"] = data_req.get("departamento")
+    data_req.pop("terreno_maximo_cuadrante", None)
     
     data_req["created_at"] = func.now()
     data_req["updated_at"] = func.now()
@@ -126,6 +127,18 @@ def get_all_project():
 
     with engine.connect() as conn:
         result = conn.execute(query)
+        rows = result.fetchall()
+
+        return [row._asdict() for row in rows]
+    
+def get_all_project_by_user(id_user : int) -> list[dict]:
+    query = text("""
+        SELECT * FROM projects
+        where user_id = :id_user 
+    """)
+
+    with engine.connect() as conn:
+        result = conn.execute(query,{"id_user":id_user})
         rows = result.fetchall()
 
         return [row._asdict() for row in rows]

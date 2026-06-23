@@ -7,10 +7,12 @@ def stage_build_plane(ctx : PipelineContext):
     
     vertices = ctx.request.vertices
     vertices = [[punto["x"], punto["y"]] for punto in vertices]
+    terreno_maximo_cuadrante= ctx.request.terreno_maximo_cuadrante
     
     data_builded, _, factory_capas, RESUMEN_AREAS = cuadrante_1(
         vertices,
-        ctx.ambientes
+        ctx.ambientes,
+        terreno_maximo_cuadrante
     )
     
     ctx.resumen_ambientes = RESUMEN_AREAS
