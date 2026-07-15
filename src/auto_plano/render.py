@@ -639,12 +639,12 @@ class Aula:
 
     # 🔷 1. Aula
     data_aula = pd.DataFrame({
-        "ancho": [self.ancho],
-        "largo": [self.largo],
-        "area": [self.area],
-        "piso": [self.piso],
-        "description": [self.description],
-        "geometria": [self.geometria],
+        "ancho": self.ancho,
+        "largo": self.largo,
+        "area": self.area,
+        "piso": self.piso,
+        "description": self.description,
+        "geometria": self.geometria,
         "x": [self.x],
         "y": [self.y],
         "tipo": ["aula"]

@@ -580,7 +580,7 @@ def procesar_distribucion_principal(df_calculos, datos_finales, exist_2do_cuad):
     # Categorías de ambientes especiales
     especiales = {
         "losa": ["Losa Deportiva"],
-        "patio": ["Patio de Inicial"],
+        "patio": ["Patio Inicial"],
         "taller": ["Taller EPT"],
         "sum": ["SUM"],
         "cocina": ["Cocina Prim - Sec"]
@@ -903,7 +903,7 @@ def procesar_segundo_cuadrante(df_calculos, rects, datos_finales_2do_cuad):
     zona_patio_q2.nombre = "PATIO DE INICIAL Q2"
 
     # 3. Procesar df_calculos para insertar ambientes
-    patio_inicial_nombres_q2 = ["Patio de Inicial"]
+    patio_inicial_nombres_q2 = ["Patio Inicial"]
 
     for _, row in df_calculos.iterrows():
         # Saltamos si no hay área definida o cantidad es 0

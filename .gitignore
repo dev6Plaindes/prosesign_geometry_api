@@ -1,4 +1,41 @@
 .env
+.env.production
+.env.deploy
+.env.example.txt
 venv
-__pycache__
 hip-service-491917-s6-4e534bb75127.json
+
+data_ambiente.csv
+src.zip
+/renders
+/renders_ai
+/notebooks
+/temp*/
+/logs
+/.pytest_cache
+
+./__pycache__
+# Caché de Python
+__pycache__/
+*.py[cod]
+*$py.class
+/__pycache__
+# Archivos de configuración o secretos
+*.json
+*.png
+*.xlsx
+*.zip
+*.log
+!/config/tu_configuracion_permitida.json # Opcional: Des-ignora un archivo específico si lo necesitas
+
+# Datos y archivos temporales
+data_ambiente.csv
+src.zip
+bim.zip
+/temp*/
+/logs/
+
+# Carpetas de procesamiento y resultados
+/renders/
+/renders_ai/
+/notebooks/

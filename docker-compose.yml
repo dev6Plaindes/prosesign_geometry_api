@@ -1,3 +1,9 @@
+# [DOCUMENTACIÓN]
+# Archivo: docker-compose.yml (prosesign_geometry_api)
+# Modificación 2026-07-03: Se descomentaron los servicios 'geometry-api' y 'worker',
+#                          configurando los puertos expuestos como "8006:8001" para el
+#                          acceso público a la API en producción.
+
 services:
   # Servicio de Geometría (Python/FastAPI)
   geometry-api:
@@ -6,14 +12,41 @@ services:
       dockerfile: Dockerfile
     container_name: prodesign-geometry-api
     ports:
-      - "8001:8001"
+      - "8006:8001"
     volumes:
       - .:/app
-    environment:
-      - ENV=production
     networks:
-      - prosupervision_network
+      - prodesign_network
+    depends_on:
+      - redis
+    env_file:
+      - .env
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_bim
+    command: redis-server --requirepass prodesign123
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - prodesign_network
+
+  # Servicio de procesamiento en segundo plano (Worker)
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: prodesign-worker
+    command: python worker.py
+    volumes:
+      - .:/app
+    networks:
+      - prodesign_network
+    depends_on:
+      - redis
+      - geometry-api
 
 networks:
-  prosupervision_network:
+  prodesign_network:
     external: true

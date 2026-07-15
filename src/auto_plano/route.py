@@ -5,6 +5,7 @@ from fastapi.responses import FileResponse
 import numpy as np
 import pandas as pd
 from shapely import Polygon
+from src.motor.export_xdf import ExportDXF, get_max_pisos
 from src.auto_plano.generate_2d import dibujar_geometrias, dibujar_geometrias_por_piso
 from src.auto_plano.generate_vertices import generate_geometry
 from src.auto_plano.repository import actualizar_vectores_proyecto, obtener_proyecto_por_id
@@ -87,7 +88,6 @@ async def read_item(item_id: int):
     return {"data" : project}
 
 
-
 @router.get("/project-plane2d/{item_id}", response_class=HTMLResponse)
 async def read_item(item_id: int, piso: int = Query(1, description="Número de piso a mostrar")):
     project = obtener_proyecto_por_id(item_id)
@@ -114,26 +114,17 @@ async def export_project_dxf(item_id: int, background_tasks: BackgroundTasks):
         raise HTTPException(status_code=404, detail="Proyecto no encontrado o sin datos.")
 
     vertices = project["vertices_generadas"]
-    df = pd.DataFrame(vertices)
 
-    if df.empty:
-        raise HTTPException(status_code=400, detail="El proyecto no tiene geometrías para exportar.")
-
-    # --- PASO CRUCIAL: Conversión a Objetos Shapely ---
-    # Sin esto, la función de exportación fallará al intentar calcular centroides
-    try:
-        df['geometria_mundo'] = df['geometria_mundo'].apply(
-            lambda coords: Polygon(coords) if isinstance(coords, list) and len(coords) >= 3 else None
-        )
-    except Exception as e:
-        print(f"❌ Error convirtiendo coordenadas: {e}")
-        raise HTTPException(status_code=500, detail="Error en el formato de coordenadas.")
-
-    # 3. Generar el archivo físico temporalmente
     filename = f"plano_{item_id}.dxf"
     
+    max_piso = get_max_pisos(vertices)
+    
+    exporter = ExportDXF(filename)
+
     try:
-        exportar_unico_archivo_cad(df, filename=filename)
+        exporter.export(vertices, int(max_piso))
+        exporter.save()
+        
     except Exception as e:
         print(f"❌ Error generando DXF: {e}")
         raise HTTPException(status_code=500, detail="Error interno al generar el archivo CAD.")

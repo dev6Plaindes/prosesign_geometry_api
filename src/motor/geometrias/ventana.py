@@ -173,4 +173,4 @@ class Ventana:
           "geometria_3d": self.geom_dintel_3d
       })
 
-      return pd.DataFrame(filas)
+      return filas

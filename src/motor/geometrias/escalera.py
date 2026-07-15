@@ -177,7 +177,7 @@ class Escalera:
                 "geometria_3d": geom_3d
             })
 
-        return pd.DataFrame(filas)
+        return filas
 
     def _add_box(self, fig, x, y, z, dx, dy, dz, color):
 
@@ -280,7 +280,7 @@ class Descanso():
             "geometria_3d": self.geometria_3d
         })
 
-        return pd.DataFrame(filas)
+        return filas
 
     def render_3d(self, fig=None, color='gray', opacity=1):
         if fig is None:
@@ -309,13 +309,14 @@ class Descanso():
         return fig
 
 class EscalerasCompleta:
-    def __init__(self, ancho=2.4, largo=4, x=0, y=0, piso_inicio=1,
+    def __init__(self, ancho=2.4, largo=4, x=0, y=0, z=0, piso_inicio=1,
                  altura_piso=3.0, num_escalones=7,
                  direccion="norte", description="Escalera"):
         self.ancho = ancho
         self.largo = largo
         self.x = x
         self.y = y
+        self.z = z
         self.piso_inicio = piso_inicio
         self.altura_piso = altura_piso
         self.num_escalones = num_escalones
@@ -341,14 +342,16 @@ class EscalerasCompleta:
 
         # 2. Tramo 1 (Sube del nivel 0 a altura_media)
         # IMPORTANTE: Asegúrate de que Escalera acepte 'z' o cámbialo al nombre correcto
-
+        z_inicio = self.z
+        distancia_mid = 1.47
+        z_mid = z_inicio + distancia_mid
         if self.direccion == "sur":
             self.escaleras.append(Escalera(
                 ancho=ancho_tramo,
                 largo=largo_tramo,
                 x=self.x,
                 y=self.y,
-                z=0,  # Cambié z_inicio por z (ajusta según tu clase Escalera)
+                z=z_inicio,  # Cambié z_inicio por z (ajusta según tu clase Escalera)
                 num_escalones=self.num_escalones
             ))
 
@@ -358,17 +361,15 @@ class EscalerasCompleta:
                 largo=1.2,
                 x=self.x,
                 y=self.y + largo_tramo,
-                z=1.47,
+                z=z_mid,
             )
 
-            # 4. Tramo 2 (Sube de altura_media al nivel final)
-            # Nota: Para que el segundo tramo regrese, podrías necesitar invertir su dirección
             self.escaleras.append(Escalera(
                 ancho=ancho_tramo,
                 largo=largo_tramo,
                 x=self.x + ancho_tramo,
                 y=self.y,
-                z=1.47,
+                z=z_mid,
                 altura_piso=1.43,
                 num_escalones=self.num_escalones,
                 direccion=self.direccion
@@ -379,18 +380,18 @@ class EscalerasCompleta:
             self.escaleras.append(Escalera(
                 ancho=ancho_tramo, largo=largo_tramo,
                 x=self.x + ancho_tramo, y=self.y + 1.2,
-                z=0, num_escalones=self.num_escalones, direccion = "sur"
+                z=z_inicio, num_escalones=self.num_escalones, direccion = "sur"
             ))
             # Descanso: Abajo (ocupa todo el ancho)
             self.descanso_escalera = Descanso(
                 ancho=self.ancho, largo=1.2,
-                x=self.x, y=self.y, z=1.47
+                x=self.x, y=self.y, z=z_mid
             )
             # Tramo 2: Comienza en el descanso y sube hacia el norte
             self.escaleras.append(Escalera(
                 ancho=ancho_tramo, largo=largo_tramo,
                 x=self.x, y=self.y + 1.2,
-                z=1.47, altura_piso=1.43,
+                z=z_mid, altura_piso=1.43,
                 num_escalones=self.num_escalones, direccion=self.direccion
             ))
 
@@ -399,19 +400,19 @@ class EscalerasCompleta:
             self.escaleras.append(Escalera(
                 ancho=largo_tramo, largo=ancho_tramo,
                 x=self.x  + 1.2, y=self.y,
-                z=0, num_escalones=self.num_escalones, direccion="oeste"
+                z=z_inicio, num_escalones=self.num_escalones, direccion="oeste"
             ))
             # Descanso: A la derecha
             self.descanso_escalera = Descanso(
                 ancho=1.2, largo=self.ancho,
-                x=self.x, y=self.y, z=1.47
+                x=self.x, y=self.y, z=z_mid
             )
 
             # Tramo 2: Regresa de derecha a izquierda (parte inferior)
             self.escaleras.append(Escalera(
                 ancho=largo_tramo, largo=ancho_tramo,
                 x=self.x + 1.2, y=self.y + self.ancho / 2,
-                z=1.47, altura_piso=1.43,
+                z=z_mid, altura_piso=1.43,
                 num_escalones=self.num_escalones, direccion=self.direccion
             ))
 
@@ -420,20 +421,20 @@ class EscalerasCompleta:
             self.escaleras.append(Escalera(
                 ancho=largo_tramo, largo=ancho_tramo,
                 x=self.x, y=self.y,
-                z=0, num_escalones=self.num_escalones, direccion="este"
+                z=z_inicio, num_escalones=self.num_escalones, direccion="este"
             ))
 
             # Descanso: A la derecha
             self.descanso_escalera = Descanso(
                 ancho=1.2, largo=self.ancho,
-                x=self.x + largo_tramo, y=self.y, z=1.47
+                x=self.x + largo_tramo, y=self.y, z=z_mid
             )
 
             # # Tramo 2: De izquierda a derecha (parte superior)
             self.escaleras.append(Escalera(
                 ancho=largo_tramo, largo=ancho_tramo,
                 x=self.x, y=self.y +self.ancho / 2,
-                z=1.47, altura_piso=1.43,
+                z=z_mid, altura_piso=1.43,
                 num_escalones=self.num_escalones, direccion=self.direccion
             ))
 
@@ -449,34 +450,70 @@ class EscalerasCompleta:
             self.descanso_escalera.render_3d(fig)
 
         return fig
-    
+
     def get_data(self):
-        dataframes = []
 
-        # 🔷 1. Data base de la escalera completa (opcional pero recomendado)
-        data_base = pd.DataFrame({
-            "tipo": ["escalera_completa"],
-            "description": [self.description],
-            "piso_inicio": [self.piso_inicio],
-            "x": [self.x],
-            "y": [self.y],
-            "ancho": [self.ancho],
-            "largo": [self.largo],
-            "geometria": [self.geometria],
-            "geometria_3d": [None]
-        })
+        data = []
 
-        dataframes.append(data_base)
+        # =====================================
+        # 1. DATA BASE ESCALERA COMPLETA
+        # =====================================
+        data_base = {
+            "tipo": "escalera_completa",
+            "description": self.description,
+            "piso_inicio": self.piso_inicio,
+            "x": self.x,
+            "y": self.y,
+            "ancho": self.ancho,
+            "largo": self.largo,
+            "geometria": self.geometria,
+            "geometria_3d": None
+        }
 
-        # 🔥 2. Escaleras (cada tramo)
+        data.append(data_base)
+
+        # =====================================
+        # 2. ESCALERAS (TRAMOS)
+        # =====================================
         for esc in self.escaleras:
+
             if hasattr(esc, "get_data"):
-                dataframes.append(esc.get_data())
 
-        # 🔥 3. Descanso
-        if self.descanso_escalera and hasattr(self.descanso_escalera, "get_data"):
-            dataframes.append(self.descanso_escalera.get_data())
+                esc_data = esc.get_data()
 
-        # 🔗 Unir todo
-        return pd.concat(dataframes, ignore_index=True)
+                # Equivalente exacto a concat
+                if isinstance(esc_data, list):
 
+                    data.extend(esc_data)
+
+                else:
+
+                    data.append(esc_data)
+
+        # =====================================
+        # 3. DESCANSO
+        # =====================================
+        if (
+            self.descanso_escalera
+            and hasattr(
+                self.descanso_escalera,
+                "get_data"
+            )
+        ):
+
+            descanso_data = (
+                self.descanso_escalera.get_data()
+            )
+
+            if isinstance(descanso_data, list):
+
+                data.extend(descanso_data)
+
+            else:
+
+                data.append(descanso_data)
+
+        # =====================================
+        # CONCAT FINAL
+        # =====================================
+        return data

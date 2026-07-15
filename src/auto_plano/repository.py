@@ -1,6 +1,8 @@
 import json
 import os
 from sqlalchemy import create_engine, text
+from shapely import wkt
+from shapely.geometry.base import BaseGeometry
 
 # Configuramos la URL de conexión usando tus variables
 DB_USER = os.getenv("DB_USER", "root")
@@ -12,6 +14,85 @@ DB_NAME = os.getenv("DB_NAME", "db_arquitectura")
 # Cadena de conexión para MySQL
 DATABASE_URL = f"mysql+mysqlconnector://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
+def geometry_to_json(data):
+
+    resultado = []
+
+    for row in data:
+
+        row_copy = row.copy()
+
+        geom = row_copy.get("geometria")
+
+        # ==================================
+        # SHAPELY -> WKT
+        # ==================================
+        if isinstance(geom, BaseGeometry):
+
+            row_copy["geometria"] = geom.wkt
+
+        # ==================================
+        # YA ES STRING
+        # ==================================
+        elif isinstance(geom, str):
+
+            row_copy["geometria"] = geom
+
+        # ==================================
+        # NONE
+        # ==================================
+        else:
+
+            row_copy["geometria"] = None
+
+        resultado.append(row_copy)
+
+    return resultado
+
+import numpy as np
+
+def clean_for_json(obj):
+
+    # =========================
+    # LISTA
+    # =========================
+    if isinstance(obj, list):
+
+        return [
+            clean_for_json(item)
+            for item in obj
+        ]
+
+    # =========================
+    # DICT
+    # =========================
+    if isinstance(obj, dict):
+
+        return {
+            key: clean_for_json(value)
+            for key, value in obj.items()
+        }
+
+    # =========================
+    # NUMPY -> PYTHON
+    # =========================
+    if isinstance(obj, np.integer):
+
+        return int(obj)
+
+    if isinstance(obj, np.floating):
+
+        return float(obj)
+
+    if isinstance(obj, np.ndarray):
+
+        return obj.tolist()
+
+    # =========================
+    # DEFAULT
+    # =========================
+    return obj
+
 def actualizar_vectores_proyecto(id_proyecto, vectores):
     """
     Toma el df_global, lo limpia y actualiza la columna JSON en db_arquitectura.
@@ -19,7 +100,6 @@ def actualizar_vectores_proyecto(id_proyecto, vectores):
     # 1. Preparar los datos (convertir Polygons a listas de coordenadas)
     # Usamos la función de limpieza que definimos antes
     json_payload = json.dumps(vectores)
-
     # 2. Crear motor de base de datos
     engine = create_engine(DATABASE_URL)
 

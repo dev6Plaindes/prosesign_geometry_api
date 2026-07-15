@@ -73,10 +73,10 @@ class Losa:
             "y": self.y,
             "tipo": "losa",
             "subtipo": "estructura",
-            "geometria_3d" : [self.geometria_3d],
+            "geometria_3d" : self.geometria_3d,
         }
 
-        return pd.DataFrame(data, index=[0])
+        return [data]
 
     def draw(self, fig, color="lightgrey", borde="black"):
         """

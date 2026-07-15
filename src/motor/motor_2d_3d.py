@@ -127,28 +127,45 @@ class Motor2D:
     return resultados
 
   def get_data(self):
-      """
-      Devuelve un DataFrame con los datos del Motor2D y todas sus subáreas recursivamente.
-      """
-      # Datos del área principal
-      data = {
-          "ancho": self.ancho,
-          "largo": self.largo,
-          "area": self.area,
-          "piso": self.piso,
-          "description": self.description,
-          "geometria": self.geometria,
-          "tipo":"render",
-          "x": self.x,
-          "y": self.y
-      }
-      df = pd.DataFrame(data, index=[0])
+    """
+    Devuelve los datos del Motor2D y todas sus
+    subáreas recursivamente.
 
-      # Recorrer subáreas recursivamente
-      for sub in self.subareas:
-          df = pd.concat([df, sub.get_data()], ignore_index=True)
+    MISMA lógica original, sin pandas.
+    """
 
-      return df
+    # =====================================
+    # DATOS DEL ÁREA PRINCIPAL
+    # =====================================
+    data = [{
+        "ancho": self.ancho,
+        "largo": self.largo,
+        "area": self.area,
+        "piso": self.piso,
+        "description": self.description,
+        "geometria": self.geometria,
+        "tipo": "render",
+        "x": self.x,
+        "y": self.y
+    }]
+
+    # =====================================
+    # RECORRER SUBÁREAS RECURSIVAMENTE
+    # =====================================
+    for sub in self.subareas:
+
+        sub_data = sub.get_data()
+
+        # Equivalente exacto a pd.concat
+        if isinstance(sub_data, list):
+
+            data.extend(sub_data)
+
+        else:
+
+            data.append(sub_data)
+
+    return data
 
   def render(self):
     """
@@ -219,3 +236,5 @@ class Motor2D:
             showlegend=True
         )
         return fig
+
+
