@@ -1,0 +1,72 @@
+# [DOCUMENTACIÓN]
+# Archivo: .github/workflows/deploy.yml (prosesign_geometry_api)
+# Modificación 2026-07-03: Se adaptó la ejecución de Docker Compose para realizar
+#                          reconstrucción sin caché e inicio forzado. Se cambió el nombre
+#                          del proyecto a 'prodesign-geometry' para evitar colisiones de nombres
+#                          y se añadió '.env' al listado de exclusión de rsync como prevención.
+
+name: Deploy PRODESIGN API SERVICES 2D, 3D
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v5
+
+      - name: Sincronizar archivos
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          REMOTE_HOST: ${{ secrets.SERVER_IP }}
+          REMOTE_USER: ${{ secrets.SSH_USER }}
+          SOURCE: "./"
+          TARGET: "/home/ftpceon/ftp/prodesign/prosesign_geometry_api/"
+          ARGS: "-rlgoDzvc -i"
+          EXCLUDE: >
+            /.git/,
+            /.github/,
+            __pycache__/,
+            .venv/,
+            logs/,
+            renders/,
+            renders_ai/,
+            .env,
+      - name: Desplegar con Docker Compose
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /home/ftpceon/ftp/prodesign/prosesign_geometry_api
+            echo "========================================="
+            echo "Archivos sincronizados:"
+            ls -la
+            echo "========================================="
+            echo "Validando docker-compose..."
+            docker compose config > /dev/null
+            echo "Deteniendo contenedores anteriores..."
+            # [DOCUMENTACIÓN] Modificación 2026-07-03: Se detiene el proyecto viejo 'prodesign' para liberar los nombres de los contenedores
+            docker compose -p prodesign down || true
+            docker compose -p prodesign-geometry down || true
+            echo "Construyendo imágenes SIN CACHÉ..."
+            docker compose -p prodesign-geometry build --no-cache
+            echo "Levantando contenedores..."
+            docker compose -p prodesign-geometry up -d --force-recreate
+            echo "Limpiando imágenes residuales..."
+            docker image prune -f
+            docker builder prune -f
+            echo "========================================="
+            echo "Estado final:"
+            docker compose -p prodesign-geometry ps
+            echo "Logs recientes:"
+            docker compose -p prodesign-geometry logs --tail=20
+            echo "========================================="
