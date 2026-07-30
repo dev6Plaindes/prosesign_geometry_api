@@ -11,7 +11,6 @@ from bim.utils.logic import (
     acumulate_coords,
     div_logic,
     largos_for_piso_and_ambiente,
-    translate_norm,
 )
 from bim.utils.step_to_json import (
     ensamblaje_to_array,
@@ -23,7 +22,6 @@ from bim.cuadrante_2do import build_2do_cuad
 from bim.utils.transform_referencia import transformar_escena_con_referencia
 from bim.max_cuadrante import (
     find_best_rectangle,
-    find_next_best_rectangle,
     normalizar_polygon,
     find_max_rect_for_angle,
 )
@@ -185,6 +183,7 @@ def cuadrante_1(vertices_terreno, data_dict_ambientes, number_floors=None, verti
     
     
     largos_primaria = largos_for_piso_and_ambiente(data_primaria, largo_cuadrante, name_pabellon="primaria") # DATA
+        
     sum_largos_primaria = sum(item["largo"] for item in largos_primaria[0])
     desplazamiento_y_inf = calcular_desplazamiento_y(
         ancho_inferior, e_muro, ancho_cuadrante, borde="inferior"
@@ -610,7 +609,6 @@ def cuadrante_1(vertices_terreno, data_dict_ambientes, number_floors=None, verti
         )
 
     datos = ensamblaje_to_array(ensamblaje)
-    
     
     RESUMEN_AREAS.append({"inicial": largos_inicial})
     RESUMEN_AREAS.append({"primaria" : largos_primaria})

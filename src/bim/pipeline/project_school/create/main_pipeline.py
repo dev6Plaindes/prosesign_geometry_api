@@ -25,7 +25,7 @@ def generate_project_school_pipeline(
 
     # Construir plano de colegio
     stage_build_plane(ctx_data)
-    
+        
     # Convertir Plano a step y Guardar en la version del proyecto
     stage_convert_plane_and_save(ctx_data)
     

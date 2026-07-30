@@ -182,11 +182,15 @@ Probar el worker
 watchfiles "py worker.py" src
 ```
 
-Testear generacion de proyecto
+Testear generacion de proyecto con datos
 ```bash
 py -m tests.generate_project
 ```
 
+Test visualizacion y generacion de plano
+```bash
+watchfiles "py -m dev.dev_2" dev 
+```
 
 ---
 

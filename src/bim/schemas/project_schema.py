@@ -33,3 +33,4 @@ class ProjectRequest(BaseModel):
     vertices_rectangle: Optional[List[List[float]]] = None
     angle: Optional[float] = None
     excluded_vertices: Optional[List[List[float]]] = None
+    user_id : int

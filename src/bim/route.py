@@ -69,7 +69,6 @@ def create_costos_project(project_id: int, data_req : CostosRequest):
             "id_project" : project_id
         }
     }
-    
 
 @router.get("/project/{project_id}", status_code=status.HTTP_200_OK)
 def get_project(project_id: int):

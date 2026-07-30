@@ -1,4 +1,5 @@
 import math
+from turtle import color
 import cadquery as cq
 
 from bim.config_proyect import CONFIG_PROYECTO
@@ -92,4 +93,4 @@ def create_techo_z3(
         pivote = (desplazamiento_x, desplazamiento_y, 0)
         techo = techo.rotate(pivote, (desplazamiento_x, desplazamiento_y, 1), 90)
 
-    ensamblaje.add(techo, name=f"Techo Especial Z3 {sufijo_nombre} - Nivel {nivel}")
+    ensamblaje.add(techo, name=f"Techo Especial Z3 {sufijo_nombre} - Nivel {nivel}", color=cq.Color("#4A4A4A"))

@@ -1,4 +1,6 @@
 from bim.cuadrante_1 import cuadrante_1
+from bim.utils.step_to_json import ensamblaje_to_array
+from bim.v2.cuadrante_1_v2 import cuadrante_1_v2
 from src.bim.pipeline.project_school.create.pipeline_context import PipelineContext
 from src.utils.logger import logger
 
@@ -24,17 +26,34 @@ def stage_build_plane(ctx : PipelineContext):
     if len(available_vertices) < 3:
         available_vertices = vertices
     
-    data_builded, _, factory_capas, RESUMEN_AREAS = cuadrante_1(
-        available_vertices,
+    # data_builded, _, factory_capas, RESUMEN_AREAS = cuadrante_1(
+    #     available_vertices,
+    #     ctx.ambientes,
+    #     number_floors=ctx.request.number_floors,
+    #     vertices_rectangle=ctx.request.vertices_rectangle,
+    #     angle=ctx.request.angle
+    # )
+    
+    vertices_cuadrante = ctx.request.vertices_rectangle
+    vertices_terreno = ctx.request.vertices
+    
+    print(vertices_cuadrante)
+    print(vertices_terreno)
+    
+    
+    # Genera plano y guarda en s3 tambien
+    ensamblaje, factory_capas, RESUMEN_AREAS = cuadrante_1_v2(
+        vertices_terreno,
+        vertices_cuadrante,
         ctx.ambientes,
-        number_floors=ctx.request.number_floors,
-        vertices_rectangle=ctx.request.vertices_rectangle,
-        angle=ctx.request.angle
+        ctx.id_project
     )
+    
+    datos_ensamblaje = ensamblaje_to_array(ensamblaje)
     
     ctx.resumen_ambientes = RESUMEN_AREAS
     ctx.factory_capas = factory_capas
-    ctx.vertices_plano = data_builded
+    ctx.vertices_plano = datos_ensamblaje
     
     logger.info("PLANO DE COLEGIO CONSTRUIDO")
     
