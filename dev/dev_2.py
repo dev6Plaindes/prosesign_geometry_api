@@ -91,23 +91,34 @@ data_admin: list[DataAmbientes] = pabellones["admin"]
 # Lógica para determinar la orientación de la puerta hacia el centro
 centro_absoluto = space_centro_2.centroid
 
-def determinar_posicion_puerta(pabellon_polygon, centro_layout):
-    """Determina si la puerta debe ser 'top' o 'bottom' para que mire al centro."""
-    centro_pabellon = pabellon_polygon.centroid
+def determinar_posicion_puerta(pabellon_polygon, centro_layout, nombre_pabellon):
+    """
+    Determina la orientación de la puerta ('top' o 'bottom') para que mire hacia el centro.
+    Tiene en cuenta que la orientación de los polígonos puede estar invertida.
+    """
+    # Asumimos que solo 'primaria' tiene la orientación de vértices "correcta" o de referencia.
+    # Los demás polígonos generados por divisiones sucesivas pueden tenerla invertida,
+    # lo que cambia el significado de 'top' y 'bottom' en la rotación interna de create_structure.
+    orientacion_invertida = nombre_pabellon != "primaria"
     
-    # La orientación de la puerta depende de si el pabellón está a la izquierda o derecha del centro.
-    # Esta lógica asume que la rotación en `create_structure` es consistente.
-    # Si el pabellón está a la izquierda del centro, su "lado largo" se orientará de tal forma
-    # que "top" apunte hacia el centro. Si está a la derecha, "bottom" apuntará al centro.
-    if centro_pabellon.x < centro_layout.x:
-        return "top"  # Pabellones a la izquierda miran hacia la derecha (centro)
-    else:
-        return "bottom"  # Pabellones a la derecha miran hacia la izquierda (centro)
+    centro_pabellon = pabellon_polygon.centroid
+    esta_a_la_izquierda = centro_pabellon.x < centro_layout.x
 
-pos_puerta_primaria = determinar_posicion_puerta(primaria, centro_absoluto)
-pos_puerta_secundaria = determinar_posicion_puerta(secundaria, centro_absoluto)
-pos_puerta_inicial = determinar_posicion_puerta(inicial, centro_absoluto)
-pos_puerta_admin = determinar_posicion_puerta(admin, centro_absoluto)
+    if esta_a_la_izquierda:
+        # Pabellones a la izquierda (Primaria, Admin) deben apuntar a la DERECHA.
+        # - Rotación normal ('primaria'): la DERECHA es 'top'.
+        # - Rotación invertida ('admin'): la DERECHA es 'bottom'.
+        return "left" if orientacion_invertida else "top"
+    else:
+        # Pabellones a la derecha (Secundaria, Inicial) deben apuntar a la IZQUIERDA.
+        # - Rotación normal: la IZQUIERDA es 'bottom'.
+        # - Rotación invertida: la IZQUIERDA es 'top'.
+        return "top" if orientacion_invertida else "bottom"
+
+pos_puerta_primaria = determinar_posicion_puerta(primaria, centro_absoluto, "primaria")
+pos_puerta_secundaria = determinar_posicion_puerta(secundaria, centro_absoluto, "secundaria")
+pos_puerta_inicial = determinar_posicion_puerta(inicial, centro_absoluto, "inicial")
+pos_puerta_admin = determinar_posicion_puerta(admin, centro_absoluto, "admin")
 
 # PRIMARIA
 
