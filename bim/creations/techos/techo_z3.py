@@ -1,5 +1,3 @@
-import math
-from turtle import color
 import cadquery as cq
 
 from bim.config_proyect import CONFIG_PROYECTO
