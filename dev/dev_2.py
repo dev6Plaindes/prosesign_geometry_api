@@ -93,27 +93,21 @@ centro_absoluto = space_centro_2.centroid
 
 def determinar_posicion_puerta(pabellon_polygon, centro_layout, nombre_pabellon):
     """
-    Determina la orientación de la puerta ('top' o 'bottom') para que mire hacia el centro.
-    Tiene en cuenta que la orientación de los polígonos puede estar invertida.
+    Determina si la puerta debe estar en el lado 'top' o 'bottom' para que mire hacia el patio central.
+    La lógica asume que los pabellones son más largos que anchos (verticales) y que la función 
+    create_structure los rotará 90 grados para trabajar. En esa rotación, el lado derecho (+X)
+    se convierte en el lado superior (+Y, 'top'), y el izquierdo (-X) en el inferior (-Y, 'bottom').
     """
-    # Asumimos que solo 'primaria' tiene la orientación de vértices "correcta" o de referencia.
-    # Los demás polígonos generados por divisiones sucesivas pueden tenerla invertida,
-    # lo que cambia el significado de 'top' y 'bottom' en la rotación interna de create_structure.
-    orientacion_invertida = nombre_pabellon != "primaria"
-    
     centro_pabellon = pabellon_polygon.centroid
-    esta_a_la_izquierda = centro_pabellon.x < centro_layout.x
-
-    if esta_a_la_izquierda:
-        # Pabellones a la izquierda (Primaria, Admin) deben apuntar a la DERECHA.
-        # - Rotación normal ('primaria'): la DERECHA es 'top'.
-        # - Rotación invertida ('admin'): la DERECHA es 'bottom'.
-        return "left" if orientacion_invertida else "top"
+    
+    # Si el pabellón está a la izquierda del centro, su puerta debe estar en su lado derecho.
+    # Lado derecho (+X) se convierte en 'top'.
+    if centro_pabellon.x < centro_layout.x:
+        return "top"
+    # Si el pabellón está a la derecha del centro, su puerta debe estar en su lado izquierdo.
+    # Lado izquierdo (-X) se convierte en 'bottom'.
     else:
-        # Pabellones a la derecha (Secundaria, Inicial) deben apuntar a la IZQUIERDA.
-        # - Rotación normal: la IZQUIERDA es 'bottom'.
-        # - Rotación invertida: la IZQUIERDA es 'top'.
-        return "top" if orientacion_invertida else "bottom"
+        return "bottom"
 
 pos_puerta_primaria = determinar_posicion_puerta(primaria, centro_absoluto, "primaria")
 pos_puerta_secundaria = determinar_posicion_puerta(secundaria, centro_absoluto, "secundaria")
@@ -162,7 +156,8 @@ new_block(
     alto_z=0.3,
     assembly=mi_modelo,
     nombre="Pasadizo Primaria",
-    color_hex="#D8D8D8"
+    color_hex="#D8D8D8",
+    factory_capas=factory_capas
 )
 
 # SECUNDARIA
@@ -207,7 +202,8 @@ new_block(
     alto_z=0.3,
     assembly=mi_modelo,
     nombre="Pasadizo Secundaria",
-    color_hex="#D8D8D8"
+    color_hex="#D8D8D8",
+    factory_capas=factory_capas
 )
 
 # INICIAL
@@ -289,7 +285,8 @@ new_block(
     alto_z=0.3,
     assembly=mi_modelo,
     nombre="Pasadizo Inicial",
-    color_hex="#D8D8D8"         # Azul
+    color_hex="#D8D8D8",         # Azul
+    factory_capas=factory_capas
 )
 
 
@@ -298,7 +295,8 @@ new_block(
     alto_z=0.3,
     assembly=mi_modelo,
     nombre="Pasadizo Admin",
-    color_hex="#D8D8D8"         # Azul
+    color_hex="#D8D8D8",         # Azul
+    factory_capas=factory_capas
 )
 
 # CENTRO
@@ -325,9 +323,12 @@ if patio_inicial_values:
 
 ancho_losa = patio_losa_dep_values["Ancho"] if patio_losa_dep_values else "auto"
 largo_losa = patio_losa_dep_values["Largo"] if patio_losa_dep_values else "auto"
+ancho_sum = sum_salon_usos_mult_val["Ancho"] if sum_salon_usos_mult_val else "auto"
 
 # 3. Lógica de espaciado central
-medidas_centro = [ancho_patio if patio_inicial_values else "auto", ancho_losa, "auto"]
+medidas_centro = [
+    ancho_patio if patio_inicial_values else "auto", ancho_losa, ancho_sum
+]
 tramos_centro = div_logic_with_spacing(medidas_centro, space_centro_2, eje_div="y")
 space_patio, centro_3, space_sum = tramos_centro if len(tramos_centro) == 3 else (None, None, None)
 
@@ -351,7 +352,8 @@ if patio_inicial:
         alto_z=0.3,
         assembly=mi_modelo,
         nombre="Patio Inicial",
-        color_hex="#D8D8D8"
+        color_hex="#D8D8D8",
+        factory_capas=factory_capas
     )
 
 if losa_deportiva:
@@ -360,7 +362,8 @@ if losa_deportiva:
         alto_z=0.3,
         assembly=mi_modelo,
         nombre="Losa Deportiva",
-        color_hex="#D8D8D8"
+        color_hex="#D8D8D8",
+        factory_capas=factory_capas
     )
 
 if sum_ambiente:

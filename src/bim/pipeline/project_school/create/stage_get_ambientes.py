@@ -37,6 +37,28 @@ def stage_get_ambientes(ctx: PipelineContext):
     with open('ambientes_original.json', 'w', encoding='utf-8') as f:
         json.dump(ctx.ambientes, f, indent=4, ensure_ascii=False)
 
+    # ==================== LÓGICA PARA EXCLUIR GRADOS CON AFORO CERO ====================
+    aforo_data = ctx.request.aforo
+    grados_a_excluir = {
+        item.get("grado", "").upper()
+        for item in aforo_data
+        if item.get("aforo_por_grado", 0) == 0 or item.get("cantidad_aulas", 0) == 0
+    }
+    
+    if grados_a_excluir:
+        logger.info(f"Grados a excluir por aforo/aulas cero: {grados_a_excluir}")
+
+        pabellon_map = {
+            "INICIAL": "Inferior",
+            "PRIMARIA": "Izquierda",
+            "SECUNDARIA": "Derecha"
+        }
+        pabellones_a_excluir = {pabellon_map[g] for g in grados_a_excluir if g in pabellon_map}
+        
+        if pabellones_a_excluir:
+            logger.info(f"Pabellones a excluir: {pabellones_a_excluir}")
+            ctx.ambientes = [row for row in ctx.ambientes if row.get("Pabellon") not in pabellones_a_excluir]
+
     # ==================== LISTA OFICIAL DE AMBIENTES COMPLEMENTARIOS ====================
     complementarios_posibles = {
         "SALA DE USOS MÚLTIPLES (SUM)", #OK
@@ -49,7 +71,10 @@ def stage_get_ambientes(ctx: PipelineContext):
         "SALA DE PSICOMOTRICIDAD", #ok
         "TOPICO", #OK
         "SALA DE MAESTROS",
-        "PATIO INICIAL" #OK
+        "SALA DE PROFESORES",
+        "PATIO INICIAL" #OK,
+        "BIBLIOTECA",
+        "AREA DE ESPERA"
     }
 
     if not getattr(ctx.request, 'ambientes', None):
@@ -124,6 +149,28 @@ def stage_get_ambientes_test(ctx: PipelineContext):
     with open('ambientes_original.json', 'w', encoding='utf-8') as f:
         json.dump(ctx.ambientes, f, indent=4, ensure_ascii=False)
 
+    # ==================== LÓGICA PARA EXCLUIR GRADOS CON AFORO CERO ====================
+    aforo_data = ctx.request.aforo
+    grados_a_excluir = {
+        item.get("grado", "").upper()
+        for item in aforo_data
+        if item.get("aforo_por_grado", 0) == 0 or item.get("cantidad_aulas", 0) == 0
+    }
+    
+    if grados_a_excluir:
+        logger.info(f"Grados a excluir por aforo/aulas cero: {grados_a_excluir}")
+
+        pabellon_map = {
+            "INICIAL": "Inferior",
+            "PRIMARIA": "Izquierda",
+            "SECUNDARIA": "Derecha"
+        }
+        pabellones_a_excluir = {pabellon_map[g] for g in grados_a_excluir if g in pabellon_map}
+        
+        if pabellones_a_excluir:
+            logger.info(f"Pabellones a excluir: {pabellones_a_excluir}")
+            ctx.ambientes = [row for row in ctx.ambientes if row.get("Pabellon") not in pabellones_a_excluir]
+
     # ==================== LISTA OFICIAL DE AMBIENTES COMPLEMENTARIOS ====================
     complementarios_posibles = {
         "SALA DE USOS MÚLTIPLES (SUM)", #OK
@@ -136,7 +183,11 @@ def stage_get_ambientes_test(ctx: PipelineContext):
         "SALA DE PSICOMOTRICIDAD", #ok
         "TOPICO", #OK
         "SALA DE MAESTROS",
-        "PATIO INICIAL" #OK
+        "SALA DE PROFESORES",
+        "PATIO INICIAL" #OK,
+        "TALLER CREATIVO" #OK,
+        "AREA DE ESPERA",
+        "BIBLIOTECA"
     }
 
     if not getattr(ctx.request, 'ambientes', None):

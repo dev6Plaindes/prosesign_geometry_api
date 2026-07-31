@@ -1,7 +1,8 @@
 import cadquery as cq
 import os
 import io
-from bim.upload_aws_file import subir_archivo_a_s3, obtener_archivo_en_binario
+import logging
+
 from dev.assemblys.capas import FactoryCapas
 from dev.assemblys.cuadrante import build_cuadrante_shapely
 from dev.assemblys.terreno_assembly import terreno_assembly
@@ -15,6 +16,7 @@ from dev.normalize import normalizar_datos_terreno
 from dev.types import DataAmbientes
 from dev.utils.calculate_medidas import largos_for_piso_and_ambiente, limpiar_distribucion_para_resumen, obtener_polygon_real_del_piso
 from dev.utils.largo_ancho_cuadrante import obtener_dimensiones_cuadrante
+from bim.upload_aws_file import subir_archivo_a_s3, obtener_archivo_en_binario
 from dev.utils.tools import div_logic, div_logic_with_spacing, obtener_sub_polygon_centrado
 
 # Generacion del cuadrante 1 en el plano Version 2
@@ -95,214 +97,232 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
 
     def determinar_posicion_puerta(pabellon_polygon, centro_layout, nombre_pabellon):
         """
-        Determina la orientación de la puerta ('top' o 'bottom') para que mire hacia el centro.
-        Tiene en cuenta que la orientación de los polígonos puede estar invertida.
+        Determina si la puerta debe estar en el lado 'top' o 'bottom' para que mire hacia el patio central.
+        La lógica asume que los pabellones son más largos que anchos (verticales) y que la función 
+        create_structure los rotará 90 grados para trabajar. En esa rotación, el lado derecho (+X)
+        se convierte en el lado superior (+Y, 'top'), y el izquierdo (-X) en el inferior (-Y, 'bottom').
         """
-        # Asumimos que solo 'primaria' tiene la orientación de vértices "correcta" o de referencia.
-        # Los demás polígonos generados por divisiones sucesivas pueden tenerla invertida,
-        # lo que cambia el significado de 'top' y 'bottom' en la rotación interna de create_structure.
-        orientacion_invertida = nombre_pabellon != "primaria"
-        
         centro_pabellon = pabellon_polygon.centroid
-        esta_a_la_izquierda = centro_pabellon.x < centro_layout.x
-
-        if esta_a_la_izquierda:
-            # Pabellones a la izquierda (Primaria, Admin) deben apuntar a la DERECHA.
-            # - Rotación normal ('primaria'): la DERECHA es 'top'.
-            # - Rotación invertida ('admin'): la DERECHA es 'bottom'.
-            return "bottom" if orientacion_invertida else "top"
+        
+        # Si el pabellón está a la izquierda del centro, su puerta debe estar en su lado derecho.
+        # Lado derecho (+X) se convierte en 'top'.
+        if centro_pabellon.x < centro_layout.x:
+            return "top"
+        # Si el pabellón está a la derecha del centro, su puerta debe estar en su lado izquierdo.
+        # Lado izquierdo (-X) se convierte en 'bottom'.
         else:
-            # Pabellones a la derecha (Secundaria, Inicial) deben apuntar a la IZQUIERDA.
-            # - Rotación normal: la IZQUIERDA es 'bottom'.
-            # - Rotación invertida: la IZQUIERDA es 'top'.
-            return "top" if orientacion_invertida else "bottom"
-
+            return "bottom"
+        
     pos_puerta_primaria = determinar_posicion_puerta(primaria, centro_absoluto, "primaria")
     pos_puerta_secundaria = determinar_posicion_puerta(secundaria, centro_absoluto, "secundaria")
     pos_puerta_inicial = determinar_posicion_puerta(inicial, centro_absoluto, "inicial")
     pos_puerta_admin = determinar_posicion_puerta(admin, centro_absoluto, "admin")
 
     # PRIMARIA
+    distribucion_primaria = []
+    if data_primaria:
+        distribucion_primaria = largos_for_piso_and_ambiente(
+            data=data_primaria,
+            polygon=primaria,
+            name_pabellon="Primaria"
+        )
+    
+    if distribucion_primaria:
+        container_primaria = obtener_polygon_real_del_piso(distribucion_primaria[0], primaria)
+        max_nivel_primaria = len(distribucion_primaria)
 
-    distribucion_primaria = largos_for_piso_and_ambiente(
-        data=data_primaria,
-        polygon=primaria,
-        name_pabellon="Primaria"
-    )
-    container_primaria = obtener_polygon_real_del_piso(distribucion_primaria[0], primaria)
-    max_nivel_primaria = len(distribucion_primaria)
+        for index, piso_data in enumerate(distribucion_primaria):
+            nivel_actual = index + 1
+            nombres_ambientes_piso = [item["ambiente"] for item in piso_data]
+            largos_habitaciones_piso = [item["largo"] for item in piso_data]
+            
+            create_structure(
+                ensamblaje=mi_modelo,
+                polygon=container_primaria,                       # El Polygon de Shapely del tramo
+                largos_habitaciones=largos_habitaciones_piso,
+                sufijo_nombre="Primaria",
+                posicion_puerta=pos_puerta_primaria,                  # Orientación de la puerta (top/bottom)
+                nivel=nivel_actual,
+                max_nivel=max_nivel_primaria,
+                names_ambientes=nombres_ambientes_piso,
+                factory_capas=factory_capas
+            )
 
-    for index, piso_data in enumerate(distribucion_primaria):
-        nivel_actual = index + 1
-        nombres_ambientes_piso = [item["ambiente"] for item in piso_data]
-        largos_habitaciones_piso = [item["largo"] for item in piso_data]
-        
-        create_structure(
-            ensamblaje=mi_modelo,
-            polygon=container_primaria,                       # El Polygon de Shapely del tramo
-            largos_habitaciones=largos_habitaciones_piso,
-            sufijo_nombre="Primaria",
-            posicion_puerta=pos_puerta_primaria,                  # Orientación de la puerta (top/bottom)
-            nivel=nivel_actual,
-            max_nivel=max_nivel_primaria,
-            names_ambientes=nombres_ambientes_piso,
+            create_balcony(
+                ensamblaje=mi_modelo,
+                polygon=container_primaria,
+                sufijo_nombre="Primaria",
+                posicion_puerta=pos_puerta_primaria,
+                nivel=nivel_actual,
+                ancho_balcon=1.8,
+                factory_capas=factory_capas
+            )
+
+        new_block(
+            polygon=pasadizo_primaria,
+            alto_z=0.3,
+            assembly=mi_modelo,
+            nombre="Pasadizo Primaria - Nivel 1",
+            color_hex="#D8D8D8",
             factory_capas=factory_capas
         )
-
-        create_balcony(
-            ensamblaje=mi_modelo,
-            polygon=container_primaria,
-            sufijo_nombre="Primaria",
-            posicion_puerta=pos_puerta_primaria,
-            nivel=nivel_actual,
-            ancho_balcon=1.8,
-            factory_capas=factory_capas
-        )
-
-    new_block(
-        polygon=pasadizo_primaria,
-        alto_z=0.3,
-        assembly=mi_modelo,
-        nombre="Pasadizo Primaria",
-        color_hex="#D8D8D8"
-    )
+    else:
+        logging.warning("No se encontraron datos de ambientes para Primaria o no se pudo generar la distribución. Omitiendo pabellón de Primaria.")
 
     # SECUNDARIA
-    distribucion_sec = largos_for_piso_and_ambiente(
-        data=data_secundaria,
-        polygon=secundaria,
-        name_pabellon="Secundaria"
-    )
-    container_secundaria = obtener_polygon_real_del_piso(distribucion_sec[0], secundaria)
+    distribucion_sec = []
+    if data_secundaria:
+        distribucion_sec = largos_for_piso_and_ambiente(
+            data=data_secundaria,
+            polygon=secundaria,
+            name_pabellon="Secundaria"
+        )
+    
+    if distribucion_sec:
+        container_secundaria = obtener_polygon_real_del_piso(distribucion_sec[0], secundaria)
+        max_nivel_secundaria = len(distribucion_sec)
 
-    max_nivel_secundaria = len(distribucion_sec)
+        for index, piso_data in enumerate(distribucion_sec):
+            nivel_actual = index + 1
+            nombres_ambientes_piso = [item["ambiente"] for item in piso_data]
+            largos_habitaciones_piso = [item["largo"] for item in piso_data]
+            
+            create_structure(
+                ensamblaje=mi_modelo,
+                polygon=container_secundaria,                       # El Polygon de Shapely del tramo
+                largos_habitaciones=largos_habitaciones_piso,
+                sufijo_nombre="Secundaria",
+                posicion_puerta=pos_puerta_secundaria,                  # Orientación de la puerta (top/bottom)
+                nivel=nivel_actual,
+                max_nivel=max_nivel_secundaria,
+                names_ambientes=nombres_ambientes_piso,
+                factory_capas=factory_capas
+            )
 
-    for index, piso_data in enumerate(distribucion_sec):
-        nivel_actual = index + 1
-        nombres_ambientes_piso = [item["ambiente"] for item in piso_data]
-        largos_habitaciones_piso = [item["largo"] for item in piso_data]
-        
-        create_structure(
-            ensamblaje=mi_modelo,
-            polygon=container_secundaria,                       # El Polygon de Shapely del tramo
-            largos_habitaciones=largos_habitaciones_piso,
-            sufijo_nombre="Secundaria",
-            posicion_puerta=pos_puerta_secundaria,                  # Orientación de la puerta (top/bottom)
-            nivel=nivel_actual,
-            max_nivel=max_nivel_secundaria,
-            names_ambientes=nombres_ambientes_piso,
+            create_balcony(
+                ensamblaje=mi_modelo,
+                polygon=container_secundaria,
+                sufijo_nombre="Secundaria",
+                posicion_puerta=pos_puerta_secundaria,
+                nivel=nivel_actual,
+                ancho_balcon=1.8,
+                factory_capas=factory_capas
+            )
+
+        new_block(
+            polygon=pasadizo_secundaria,
+            alto_z=0.3,
+            assembly=mi_modelo,
+            nombre="Pasadizo Secundaria Nivel 1",
+            color_hex="#D8D8D8",
             factory_capas=factory_capas
         )
-
-        create_balcony(
-            ensamblaje=mi_modelo,
-            polygon=container_secundaria,
-            sufijo_nombre="Secundaria",
-            posicion_puerta=pos_puerta_secundaria,
-            nivel=nivel_actual,
-            ancho_balcon=1.8,
-            factory_capas=factory_capas
-        )
-
-    new_block(
-        polygon=pasadizo_secundaria,
-        alto_z=0.3,
-        assembly=mi_modelo,
-        nombre="Pasadizo Secundaria",
-        color_hex="#D8D8D8"
-    )
+    else:
+        logging.warning("No se encontraron datos de ambientes para Secundaria o no se pudo generar la distribución. Omitiendo pabellón de Secundaria.")
 
     # INICIAL
-    distribucion_inicial = largos_for_piso_and_ambiente(
-        data=data_inicial,
-        polygon=inicial,
-        name_pabellon="Inicial"
-    )
-    container_inicial = obtener_polygon_real_del_piso(distribucion_inicial[0], inicial)
-
-    max_nivel_inicial = len(distribucion_inicial)
-
-    for index, piso_data in enumerate(distribucion_inicial):
-        nivel_actual = index + 1
-        nombres_ambientes_piso = [item["ambiente"] for item in piso_data]
-        largos_habitaciones_piso = [item["largo"] for item in piso_data]
-        
-        create_structure(
-            ensamblaje=mi_modelo,
-            polygon=container_inicial,                       # El Polygon de Shapely del tramo
-            largos_habitaciones=largos_habitaciones_piso,
-            sufijo_nombre="Inicial",
-            posicion_puerta=pos_puerta_inicial,             # Orientación de la puerta (top/bottom)
-            nivel=nivel_actual,
-            max_nivel=max_nivel_inicial,
-            names_ambientes=nombres_ambientes_piso,
-            factory_capas=factory_capas
+    distribucion_inicial = []
+    if data_inicial:
+        distribucion_inicial = largos_for_piso_and_ambiente(
+            data=data_inicial,
+            polygon=inicial,
+            name_pabellon="Inicial"
         )
+    
+    if distribucion_inicial:
+        container_inicial = obtener_polygon_real_del_piso(distribucion_inicial[0], inicial)
+        max_nivel_inicial = len(distribucion_inicial)
 
-        create_balcony(
-            ensamblaje=mi_modelo,
-            polygon=container_inicial,
-            sufijo_nombre="Inicial",
-            posicion_puerta=pos_puerta_inicial,
-            nivel=nivel_actual,
-            ancho_balcon=1.8,
-            factory_capas=factory_capas
-        )
+        for index, piso_data in enumerate(distribucion_inicial):
+            nivel_actual = index + 1
+            nombres_ambientes_piso = [item["ambiente"] for item in piso_data]
+            largos_habitaciones_piso = [item["largo"] for item in piso_data]
+            
+            create_structure(
+                ensamblaje=mi_modelo,
+                polygon=container_inicial,                       # El Polygon de Shapely del tramo
+                largos_habitaciones=largos_habitaciones_piso,
+                sufijo_nombre="Inicial",
+                posicion_puerta=pos_puerta_inicial,             # Orientación de la puerta (top/bottom)
+                nivel=nivel_actual,
+                max_nivel=max_nivel_inicial,
+                names_ambientes=nombres_ambientes_piso,
+                factory_capas=factory_capas
+            )
+
+            create_balcony(
+                ensamblaje=mi_modelo,
+                polygon=container_inicial,
+                sufijo_nombre="Inicial",
+                posicion_puerta=pos_puerta_inicial,
+                nivel=nivel_actual,
+                ancho_balcon=1.8,
+                factory_capas=factory_capas
+            )
+    else:
+        logging.warning("No se encontraron datos de ambientes para Inicial o no se pudo generar la distribución. Omitiendo pabellón de Inicial.")
         
         
     # ADMIN
-    distribucion_admin = largos_for_piso_and_ambiente(
-        data=data_admin,
-        polygon=admin,
-        name_pabellon="Admin"
-    )
-    container_admin = obtener_polygon_real_del_piso(distribucion_admin[0], admin)
-    max_nivel_admin = len(distribucion_admin)
+    distribucion_admin = []
+    if data_admin:
+        distribucion_admin = largos_for_piso_and_ambiente(
+            data=data_admin,
+            polygon=admin,
+            name_pabellon="Admin"
+        )
+    if distribucion_admin:
+        container_admin = obtener_polygon_real_del_piso(distribucion_admin[0], admin)
+        max_nivel_admin = len(distribucion_admin)
 
-    for index, piso_data in enumerate(distribucion_admin):
-        nivel_actual = index + 1
-        nombres_ambientes_piso = [item["ambiente"] for item in piso_data]
-        largos_habitaciones_piso = [item["largo"] for item in piso_data]
-        
-        create_structure(
-            ensamblaje=mi_modelo,
-            polygon=container_admin,                       # El Polygon de Shapely del tramo
-            largos_habitaciones=largos_habitaciones_piso,
-            sufijo_nombre="Admin",
-            posicion_puerta=pos_puerta_admin,             # Orientación de la puerta (top/bottom)
-            nivel=nivel_actual,
-            max_nivel=max_nivel_admin,
-            names_ambientes=nombres_ambientes_piso,
+        for index, piso_data in enumerate(distribucion_admin):
+            nivel_actual = index + 1
+            nombres_ambientes_piso = [item["ambiente"] for item in piso_data]
+            largos_habitaciones_piso = [item["largo"] for item in piso_data]
+            
+            create_structure(
+                ensamblaje=mi_modelo,
+                polygon=container_admin,                       # El Polygon de Shapely del tramo
+                largos_habitaciones=largos_habitaciones_piso,
+                sufijo_nombre="Admin",
+                posicion_puerta=pos_puerta_admin,             # Orientación de la puerta (top/bottom)
+                nivel=nivel_actual,
+                max_nivel=max_nivel_admin,
+                names_ambientes=nombres_ambientes_piso,
+                factory_capas=factory_capas
+            )
+
+            create_balcony(
+                ensamblaje=mi_modelo,
+                polygon=container_admin,
+                sufijo_nombre="Admin",
+                posicion_puerta=pos_puerta_admin,
+                nivel=nivel_actual,
+                ancho_balcon=1.8,
+                factory_capas=factory_capas
+            )
+    else:
+        logging.warning("No se encontraron datos de ambientes para Admin o no se pudo generar la distribución. Omitiendo pabellón de Admin.")
+            
+    if distribucion_inicial:
+        new_block(
+            polygon=pasadizo_inicial,
+            alto_z=0.3,
+            assembly=mi_modelo,
+            nombre="Pasadizo Inicial Nivel 1",
+            color_hex="#D8D8D8",         # Azul
             factory_capas=factory_capas
         )
 
-        create_balcony(
-            ensamblaje=mi_modelo,
-            polygon=container_admin,
-            sufijo_nombre="Admin",
-            posicion_puerta=pos_puerta_admin,
-            nivel=nivel_actual,
-            ancho_balcon=1.8,
+    if distribucion_admin:
+        new_block(
+            polygon=pasadizo_admin,
+            alto_z=0.3,
+            assembly=mi_modelo,
+            nombre="Pasadizo Admin Nivel 1",
+            color_hex="#D8D8D8",         # Azul
             factory_capas=factory_capas
         )
-        
-
-    new_block(
-        polygon=pasadizo_inicial,
-        alto_z=0.3,
-        assembly=mi_modelo,
-        nombre="Pasadizo Inicial",
-        color_hex="#D8D8D8"         # Azul
-    )
-
-
-    new_block(
-        polygon=pasadizo_admin,
-        alto_z=0.3,
-        assembly=mi_modelo,
-        nombre="Pasadizo Admin",
-        color_hex="#D8D8D8"         # Azul
-    )
 
     # CENTRO
 
@@ -315,29 +335,31 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
     # Variables de salida inicializadas por defecto
     patio_inicial = None
     losa_deportiva = None
+    patio_inicial_values = patio_inicial_list[0] if patio_inicial_list else None
     patio_losa_dep_values = patio_losa_dep_list[0] if patio_losa_dep_list else None
     sum_salon_usos_mult_val = sum_salon_usos_mult_list[0] if sum_salon_usos_mult_list else None
 
     # 2. Configuración condicional de dimensiones
     ancho_patio = 0
     largo_patio = 0
-    if patio_inicial_list:
-        name_ambiente, m2, cantidad, _, ancho_patio, largo_patio, *rest = patio_inicial_list[0].values()
+    if patio_inicial_values:
+        name_ambiente, m2, cantidad, _, ancho_patio, largo_patio, *rest = patio_inicial_values.values()
 
     ancho_losa = patio_losa_dep_values["Ancho"] if patio_losa_dep_values else "auto"
     largo_losa = patio_losa_dep_values["Largo"] if patio_losa_dep_values else "auto"
+    ancho_sum = sum_salon_usos_mult_val["Ancho"] if sum_salon_usos_mult_val else "auto"
 
     # 3. Lógica de espaciado central
     medidas_centro = [
-        ancho_patio if patio_inicial_list else "auto", 
+        ancho_patio if patio_inicial_values else "auto", 
         ancho_losa, 
-        "auto"
+        ancho_sum
     ]
     tramos_centro = div_logic_with_spacing(medidas_centro, space_centro_2, eje_div="y")
     space_patio, centro_3, space_sum = tramos_centro if len(tramos_centro) == 3 else (None, None, None)
 
     # 4. Creación condicional de geometrías (Solo si existen)
-    if patio_inicial_list and space_patio:
+    if patio_inicial_values and space_patio:
         tramos_patio = div_logic(["auto", largo_patio, "auto"], space_patio, eje_div="y")
         if len(tramos_patio) == 3:
             _, patio_inicial, _ = tramos_patio
@@ -355,7 +377,8 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
             alto_z=0.3,
             assembly=mi_modelo,
             nombre="Patio Inicial",
-            color_hex="#D8D8D8"
+            color_hex="#D8D8D8",
+            factory_capas=factory_capas
         )
 
     if losa_deportiva:
@@ -364,7 +387,8 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
             alto_z=0.3,
             assembly=mi_modelo,
             nombre="Losa Deportiva",
-            color_hex="#D8D8D8"
+            color_hex="#D8D8D8",
+            factory_capas=factory_capas
         )
 
     if sum_ambiente:

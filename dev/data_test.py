@@ -259,10 +259,6 @@ data_test = {
             "capacidad": 0
         },
         {
-            "ambienteComplementario": "Patio Inicial",
-            "capacidad": 0
-        },
-        {
             "ambienteComplementario": "Comedor",
             "capacidad": 0
         }

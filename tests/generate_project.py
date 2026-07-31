@@ -106,8 +106,8 @@ request_data = {
     "aforo": [
         {
             "grado": "INICIAL",
-            "aforo_por_grado": 20,
-            "cantidad_aulas": 2
+            "aforo_por_grado": 0,
+            "cantidad_aulas": 0
         },
         {
             "grado": "PRIMARIA",
@@ -234,18 +234,6 @@ request_data = {
         },
         {
             "ambienteComplementario": "Cocina escolar",
-            "capacidad": 0
-        },
-        {
-            "ambienteComplementario": "Dirección administrativa",
-            "capacidad": 0
-        },
-        {
-            "ambienteComplementario": "Patio Inicial",
-            "capacidad": 0
-        },
-        {
-            "ambienteComplementario": "Comedor",
             "capacidad": 0
         }
     ],

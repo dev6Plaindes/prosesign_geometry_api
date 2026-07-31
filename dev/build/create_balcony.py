@@ -44,10 +44,23 @@ def create_balcony(
     pivote_2d = polygon.centroid
     poly_alineado = affinity.rotate(polygon, -angulo_grados, origin=pivote_2d)
     
-    # Extraer cotas reales del estado plano cartesiano alineado
+    # Obtener cotas del estado plano (Alineado con los ejes cartesianos del CAD)
     min_x, min_y, max_x, max_y = poly_alineado.bounds
-    largo_bloque_fijo = max_x - min_x
-    ancho_hab = max_y - min_y
+    dim_x = max_x - min_x
+    dim_y = max_y - min_y
+
+    # Asegurarse de que el "largo" es la dimensión mayor, alineada con el eje X de trabajo
+    if dim_y > dim_x:
+        # La dimensión Y es más larga, rotamos 90 grados para que sea la X
+        poly_alineado = affinity.rotate(poly_alineado, 90, origin=poly_alineado.centroid)
+        angulo_grados -= 90 # Ajustamos el ángulo de rotación final para la georreferenciación inversa
+        # Recalculamos las cotas
+        min_x, min_y, max_x, max_y = poly_alineado.bounds
+        largo_bloque_fijo = max_x - min_x
+        ancho_hab = max_y - min_y
+    else:
+        largo_bloque_fijo = dim_x
+        ancho_hab = dim_y
     
     # Desplazamientos locales equivalentes
     desplazamiento_x = min_x

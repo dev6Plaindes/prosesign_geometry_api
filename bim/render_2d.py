@@ -164,6 +164,13 @@ ESTILOS = {
         "fill_color": "white",
         "legend": True,  # ¡Importante para que aparezca en la leyenda!
     },
+    "Pasadizo": {
+            "line_color": "gray",  # O el color que prefieras para la losa
+            "line_width": 1,
+            "dash": None,
+            "fill_color": "white",
+            "legend": False,  # ¡Importante para que aparezca en la leyenda!
+        },
     "Sala de Usos Múltiples (SUM)": {
         "line_color": "gray",  # O el color que prefieras para la losa
         "line_width": 1,
@@ -184,17 +191,23 @@ ESTILOS = {
 
 
 def obtener_estilo(nombre):
+    print(f"[DEBUG RENDER] Buscando estilo para el componente: '{nombre}'")
     # Para evitar que "Losa" gane a "Patio Inicial", priorizamos las palabras clave de ambientes/leyendas
     # Primero buscamos coincidencias con los estilos que SÍ llevan leyenda (prioritarios)
     for clave, estilo in ESTILOS.items():
         if estilo["legend"] and clave in nombre:
+            print(f"  -> Coincidencia encontrada (con leyenda): '{clave}'. Aplicando estilo.")
             return estilo
 
     # Si no es un ambiente con leyenda, buscamos en los elementos estructurales comunes (muros, losas, etc.)
     for clave, estilo in ESTILOS.items():
         if not estilo["legend"] and clave in nombre:
+            print(f"  -> Coincidencia encontrada (sin leyenda): '{clave}'. Aplicando estilo.")
             return estilo
 
+    print(
+        f"  -> No se encontró coincidencia para '{nombre}'. Se usará el estilo por defecto."
+    )
     return ESTILOS["DEFAULT"]
 
 

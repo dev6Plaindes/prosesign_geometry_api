@@ -5,7 +5,7 @@ from shapely import affinity
 
 from bim.config_proyect import CONFIG_PROYECTO
 from bim.creations.doors import _generate_door_geometry
-from bim.creations.escaleras import create_stairs
+from bim.creations.escaleras import create_stairs, get_stair_dimensions
 from bim.creations.techos.techo_z1 import create_techo_z_1
 from bim.creations.techos.techo_z3 import create_techo_z3
 from bim.creations.vigas import _generate_beams_geometry
@@ -49,8 +49,21 @@ def create_structure(
     
     # Obtener cotas del estado plano (Alineado con los ejes cartesianos del CAD)
     min_x, min_y, max_x, max_y = poly_alineado.bounds
-    largo_bloque_fijo = max_x - min_x
-    ancho_hab = max_y - min_y
+    dim_x = max_x - min_x
+    dim_y = max_y - min_y
+
+    # Asegurarse de que el "largo" es la dimensión mayor, alineada con el eje X de trabajo
+    if dim_y > dim_x:
+        # La dimensión Y es más larga, rotamos 90 grados para que sea la X
+        poly_alineado = affinity.rotate(poly_alineado, 90, origin=poly_alineado.centroid)
+        angulo_grados -= 90 # Ajustamos el ángulo de rotación final para la georreferenciación inversa
+        # Recalculamos las cotas
+        min_x, min_y, max_x, max_y = poly_alineado.bounds
+        largo_bloque_fijo = max_x - min_x
+        ancho_hab = max_y - min_y
+    else:
+        largo_bloque_fijo = dim_x
+        ancho_hab = dim_y
     
     # Desplazamientos locales equivalentes
     desplazamiento_x = min_x
@@ -265,16 +278,26 @@ def create_structure(
     # =========================================================================
     if nivel > 1:
         nivel_escalera = nivel - 1
-        ancho_escalera = CONFIG_PROYECTO["ancho_escalera"]
+        
+        # Obtener las dimensiones reales de la escalera para el posicionamiento
+        stair_dims = get_stair_dimensions(huella=0.28, contrahuella_max=0.17)
+        largo_escalera_x = stair_dims['largo_total_x']
+        ancho_escalera_y = stair_dims['ancho_total_y']
 
         # Las calculamos de forma local alineada y dejamos que la rotación se calcule
-        desplazamiento_x_escalera = desplazamiento_x + largo_bloque_fijo - ancho_escalera
+        # Se ubica la escalera fuera del bloque, pegada al extremo izquierdo.
+        # NOTA: Con orientacion="vertical", las dimensiones se invierten en el plano XY.
+        # El ancho en el eje X corresponde a 'ancho_escalera_y'.
+        desplazamiento_x_escalera = desplazamiento_x - ancho_escalera_y
         if posicion_puerta == "bottom":
-            desplazamiento_y_escalera = desplazamiento_y
+            # Se ubica fuera del bloque, en el lado de las puertas ('bottom')
+            # El largo en el eje Y corresponde a 'largo_escalera_x'.
+            desplazamiento_y_escalera = desplazamiento_y - largo_escalera_x
         else:
+            # Se ubica fuera del bloque, en el lado de las puertas ('top')
             desplazamiento_y_escalera = desplazamiento_y + ancho_hab
 
-        # Forzamos orientación horizontal en la llamada a la escalera alineada
+        # Se crea la escalera con su propia lógica de orientación y posición
         escalera = create_stairs(
             ensamblaje=ensamblaje,
             ancho_hab=ancho_hab,
@@ -283,7 +306,7 @@ def create_structure(
             sufijo_nombre=sufijo_nombre,
             posicion_puerta=posicion_puerta,
             nivel=nivel_escalera,
-            orientacion="horizontal",
+            orientacion="vertical",
             huella=0.28,
             contrahuella_max=0.17,
             desplazamiento_x_bloque=desplazamiento_x,

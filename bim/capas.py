@@ -97,6 +97,14 @@ class FactoryCapas:
 
         capa_assembly.add(workplane, name=name, loc=loc)
 
+    def add_columna_in_capa(self, workplane, nivel, name):
+        """Alias para add_in_capa_auto, para mantener compatibilidad."""
+        self.add_in_capa_auto(workplane, nivel, name)
+
+    def add_viga_in_capa(self, workplane, nivel, name):
+        """Alias para add_in_capa_auto, para mantener compatibilidad."""
+        self.add_in_capa_auto(workplane, nivel, name)
+
     def add_in_terreno(self, workplane, nivel, name):
         self.add_terreno(workplane, name)
 
