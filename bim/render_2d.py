@@ -274,25 +274,6 @@ def render_2d(escena):
             x_lines.extend([p1[0], p2[0], None])
             y_lines.extend([p1[1], p2[1], None])
 
-        if estilo["fill_color"]:
-
-            min_x = np.min(pts[:, 0])
-            max_x = np.max(pts[:, 0])
-
-            min_y = np.min(pts[:, 1])
-            max_y = np.max(pts[:, 1])
-
-            fig.add_shape(
-                type="rect",
-                x0=min_x,
-                y0=min_y,
-                x1=max_x,
-                y1=max_y,
-                fillcolor=estilo["fill_color"],
-                line=dict(width=0),
-                layer="below",
-            )
-
         fig.add_trace(
             go.Scatter(
                 x=x_lines,
@@ -558,17 +539,20 @@ def render_2d_shapely_automatico_regex(escena_shapely):
 
             # Dibujamos el fondo (fill) de forma individual si corresponde
             if estilo["fill_color"] and not coleccion.is_empty:
-                min_x, min_y, max_x, max_y = coleccion.bounds
-                fig.add_shape(
-                    type="rect",
-                    x0=min_x,
-                    y0=min_y,
-                    x1=max_x,
-                    y1=max_y,
-                    fillcolor=estilo["fill_color"],
-                    line=dict(width=0),
-                    layer="below",
-                )
+                for geom in coleccion.geoms:
+                    if geom.geom_type == "Polygon":
+                        x_fill, y_fill = geom.exterior.xy
+                        fig.add_trace(go.Scatter(
+                            x=list(x_fill), y=list(y_fill),
+                            fill="toself",
+                            fillcolor=estilo["fill_color"],
+                            mode="lines",
+                            line=dict(color="rgba(0,0,0,0)", width=0),
+                            legendgroup=nombre_leyenda,
+                            showlegend=False,
+                            hoveron="fills",
+                            hovertemplate=f"<b>{nombre}</b><extra></extra>",
+                        ))
 
         # Añadimos un ÚNICO trazo de línea por cada grupo acumulado
         for nombre_leyenda, datos in grupos_graficos.items():
