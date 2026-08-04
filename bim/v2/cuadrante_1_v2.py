@@ -102,16 +102,8 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
         create_structure los rotará 90 grados para trabajar. En esa rotación, el lado derecho (+X)
         se convierte en el lado superior (+Y, 'top'), y el izquierdo (-X) en el inferior (-Y, 'bottom').
         """
-        centro_pabellon = pabellon_polygon.centroid
-        
-        # Si el pabellón está a la izquierda del centro, su puerta debe estar en su lado derecho.
-        # Lado derecho (+X) se convierte en 'top'.
-        if centro_pabellon.x < centro_layout.x:
-            return "top"
-        # Si el pabellón está a la derecha del centro, su puerta debe estar en su lado izquierdo.
-        # Lado izquierdo (-X) se convierte en 'bottom'.
-        else:
-            return "bottom"
+        # Se fuerza a que todos los balcones estén en el lado derecho ('top').
+        return "top"
         
     pos_puerta_primaria = determinar_posicion_puerta(primaria, centro_absoluto, "primaria")
     pos_puerta_secundaria = determinar_posicion_puerta(secundaria, centro_absoluto, "secundaria")
@@ -397,7 +389,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
                 polygon=sum_ambiente,                       # El Polygon de Shapely del tramo
                 largos_habitaciones=[sum_salon_usos_mult_val["Largo"]],
                 sufijo_nombre="SUM",
-                posicion_puerta="bottom",             # Orientación de la puerta (top/bottom)
+                posicion_puerta="top",             # Orientación de la puerta (top/bottom)
                 nivel=1,
                 max_nivel=1,
                 names_ambientes=["SUM"],

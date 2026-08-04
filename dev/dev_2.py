@@ -1,5 +1,6 @@
 import cadquery as cq
 from ocp_vscode import show
+from bim.creations.escaleras import crear_poligono_escalera, create_stairs
 from dev.assemblys.capas import FactoryCapas
 from dev.assemblys.cuadrante import build_cuadrante_shapely
 from dev.assemblys.terreno_assembly import terreno_assembly
@@ -124,6 +125,17 @@ distribucion_primaria = largos_for_piso_and_ambiente(
 container_primaria = obtener_polygon_real_del_piso(distribucion_primaria[0], primaria)
 max_nivel_primaria = len(distribucion_primaria)
 
+poly_escalera = crear_poligono_escalera(primaria, container_primaria)
+
+new_block(
+    polygon=pasadizo_primaria,
+    alto_z=0.3,
+    assembly=mi_modelo,
+    nombre="Pasadizo Primaria",
+    color_hex="#D8D8D8",
+    factory_capas=factory_capas
+)
+
 for index, piso_data in enumerate(distribucion_primaria):
     nivel_actual = index + 1
     nombres_ambientes_piso = [item["ambiente"] for item in piso_data]
@@ -132,6 +144,7 @@ for index, piso_data in enumerate(distribucion_primaria):
     create_structure(
         ensamblaje=mi_modelo,
         polygon=container_primaria,                       # El Polygon de Shapely del tramo
+        poly_escalera=poly_escalera,
         largos_habitaciones=largos_habitaciones_piso,
         sufijo_nombre="Primaria",
         posicion_puerta=pos_puerta_primaria,                  # Orientación de la puerta (top/bottom)
@@ -151,14 +164,7 @@ for index, piso_data in enumerate(distribucion_primaria):
         factory_capas=factory_capas
     )
 
-new_block(
-    polygon=pasadizo_primaria,
-    alto_z=0.3,
-    assembly=mi_modelo,
-    nombre="Pasadizo Primaria",
-    color_hex="#D8D8D8",
-    factory_capas=factory_capas
-)
+
 
 # SECUNDARIA
 distribucion_sec = largos_for_piso_and_ambiente(
@@ -170,6 +176,17 @@ container_secundaria = obtener_polygon_real_del_piso(distribucion_sec[0], secund
 
 max_nivel_secundaria = len(distribucion_sec)
 
+poly_escalera_sec = crear_poligono_escalera(secundaria, container_secundaria, lado="izquierda")
+
+new_block(
+    polygon=poly_escalera_sec,
+    alto_z=0.3,
+    assembly=mi_modelo,
+    nombre="Esc Secundaria",
+    color_hex="#D8D8D8",
+    factory_capas=factory_capas
+)
+
 for index, piso_data in enumerate(distribucion_sec):
     nivel_actual = index + 1
     nombres_ambientes_piso = [item["ambiente"] for item in piso_data]
@@ -178,6 +195,7 @@ for index, piso_data in enumerate(distribucion_sec):
     create_structure(
         ensamblaje=mi_modelo,
         polygon=container_secundaria,                       # El Polygon de Shapely del tramo
+        poly_escalera=poly_escalera_sec,
         largos_habitaciones=largos_habitaciones_piso,
         sufijo_nombre="Secundaria",
         posicion_puerta=pos_puerta_secundaria,                  # Orientación de la puerta (top/bottom)
@@ -196,6 +214,8 @@ for index, piso_data in enumerate(distribucion_sec):
         ancho_balcon=1.8,                      # Modifica este número si deseas un balcón más ancho
         factory_capas=factory_capas
     )
+    
+
 
 new_block(
     polygon=pasadizo_secundaria,
@@ -216,6 +236,10 @@ container_inicial = obtener_polygon_real_del_piso(distribucion_inicial[0], inici
 
 max_nivel_inicial = len(distribucion_inicial)
 
+
+poly_escalera_inicial = crear_poligono_escalera(inicial, container_inicial, lado="izquierda")
+    
+
 for index, piso_data in enumerate(distribucion_inicial):
     nivel_actual = index + 1
     nombres_ambientes_piso = [item["ambiente"] for item in piso_data]
@@ -224,6 +248,7 @@ for index, piso_data in enumerate(distribucion_inicial):
     create_structure(
         ensamblaje=mi_modelo,
         polygon=container_inicial,                       # El Polygon de Shapely del tramo
+        poly_escalera=poly_escalera_inicial,
         largos_habitaciones=largos_habitaciones_piso,
         sufijo_nombre="Inicial",
         posicion_puerta=pos_puerta_inicial,             # Orientación de la puerta (top/bottom)
@@ -242,8 +267,8 @@ for index, piso_data in enumerate(distribucion_inicial):
         ancho_balcon=1.8,
         factory_capas=factory_capas
     )
-    
-    
+
+
 # ADMIN
 distribucion_admin = largos_for_piso_and_ambiente(
     data=data_admin,
@@ -253,6 +278,17 @@ distribucion_admin = largos_for_piso_and_ambiente(
 container_admin = obtener_polygon_real_del_piso(distribucion_admin[0], admin)
 max_nivel_admin = len(distribucion_admin)
 
+poly_escalera_admin = crear_poligono_escalera(admin, container_admin, lado="izquierda", posicion_vertical="bottom")
+
+new_block(
+    polygon=pasadizo_inicial,
+    alto_z=0.3,
+    assembly=mi_modelo,
+    nombre="Pasadizo Inicial",
+    color_hex="#D8D8D8",         # Azul
+    factory_capas=factory_capas
+)
+
 for index, piso_data in enumerate(distribucion_admin):
     nivel_actual = index + 1
     nombres_ambientes_piso = [item["ambiente"] for item in piso_data]
@@ -261,6 +297,7 @@ for index, piso_data in enumerate(distribucion_admin):
     create_structure(
         ensamblaje=mi_modelo,
         polygon=container_admin,                       # El Polygon de Shapely del tramo
+        poly_escalera=poly_escalera_admin,
         largos_habitaciones=largos_habitaciones_piso,
         sufijo_nombre="Admin",
         posicion_puerta=pos_puerta_admin,             # Orientación de la puerta (top/bottom)
@@ -279,15 +316,8 @@ for index, piso_data in enumerate(distribucion_admin):
         ancho_balcon=1.8,
         factory_capas=factory_capas
     )
+    
 
-new_block(
-    polygon=pasadizo_inicial,
-    alto_z=0.3,
-    assembly=mi_modelo,
-    nombre="Pasadizo Inicial",
-    color_hex="#D8D8D8",         # Azul
-    factory_capas=factory_capas
-)
 
 
 new_block(

@@ -1,0 +1,15 @@
+[33m6633a3f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m correccion de orientacion balcones y puertas
+[33mf94c937[m correct file
+[33mae7cf74[m correccion path
+[33md9adab3[m fix: visualizacion 3d, y correccion de cuadrante
+[33m74bbea1[m add github actions
+[33m67abb1a[m correcciones de archivos, correccion de leyenda, correccion de creacion de ambientes complementarios
+[33m53d0962[m geometry 3d 2d
+[33m660a0ba[m requirements and gitignore
+[33md498a5f[m process route sheets
+[33m2285e8c[m connect google sheets
+[33mde2f946[m config .env
+[33mcfe35be[m config docker
+[33m64817ca[m docker config
+[33m7f7c917[m fix
+[33mb36fc27[m first commit

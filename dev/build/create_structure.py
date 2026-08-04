@@ -5,7 +5,7 @@ from shapely import affinity
 
 from bim.config_proyect import CONFIG_PROYECTO
 from bim.creations.doors import _generate_door_geometry
-from bim.creations.escaleras import create_stairs, get_stair_dimensions
+from bim.creations.escaleras import create_stairs
 from bim.creations.techos.techo_z1 import create_techo_z_1
 from bim.creations.techos.techo_z3 import create_techo_z3
 from bim.creations.vigas import _generate_beams_geometry
@@ -22,7 +22,8 @@ def create_structure(
     nivel=1,
     max_nivel=1,
     names_ambientes: list = None,
-    factory_capas: FactoryCapas = None
+    factory_capas: FactoryCapas = None,
+    poly_escalera: Polygon = None
 ):
     """
     Construye UN solo bloque modular de ambientes variables basándose en un Polygon de Shapely.
@@ -33,7 +34,8 @@ def create_structure(
     # 1. ANALIZAR GEOMETRÍA DEL POLYGON (INCLINACIÓN Y DIMENSIONES REALES)
     # =========================================================================
     coords = list(polygon.exterior.coords)
-    p0, p1 = coords[0], coords[1]
+    # Use the first two distinct points to calculate angle, handling potential duplicate start/end points
+    p0, p1 = coords[0], next((p for p in coords if p != coords[0]), coords[1])
     
     # Calcular ángulo de inclinación nativo
     angulo_rad = math.atan2(p1[1] - p0[1], p1[0] - p0[0])
@@ -42,6 +44,7 @@ def create_structure(
         angulo_grados -= 180
     elif angulo_grados < -90:
         angulo_grados += 180
+    
 
     # Rotar temporalmente a 0° usando su propio centroide como pivote
     pivote_2d = polygon.centroid
@@ -51,12 +54,14 @@ def create_structure(
     min_x, min_y, max_x, max_y = poly_alineado.bounds
     dim_x = max_x - min_x
     dim_y = max_y - min_y
+    
+    is_original_vertical = False # Flag to indicate if the original polygon was taller than wide
 
     # Asegurarse de que el "largo" es la dimensión mayor, alineada con el eje X de trabajo
     if dim_y > dim_x:
         # La dimensión Y es más larga, rotamos 90 grados para que sea la X
         poly_alineado = affinity.rotate(poly_alineado, 90, origin=poly_alineado.centroid)
-        angulo_grados -= 90 # Ajustamos el ángulo de rotación final para la georreferenciación inversa
+        angulo_grados -= 90 # Adjust final rotation angle for inverse georeferencing
         # Recalculamos las cotas
         min_x, min_y, max_x, max_y = poly_alineado.bounds
         largo_bloque_fijo = max_x - min_x
@@ -64,6 +69,7 @@ def create_structure(
     else:
         largo_bloque_fijo = dim_x
         ancho_hab = dim_y
+    
     
     # Desplazamientos locales equivalentes
     desplazamiento_x = min_x
@@ -233,7 +239,37 @@ def create_structure(
         borde_x = borde_x + l_hab + e_muro
 
     # =========================================================================
-    # 7. CORTES FINALES DE VENTANAS Y ENSAMBLAJE DE ESTRUCTURA SOPORTE
+    # 7. GENERACIÓN DE ESCALERAS (LOCAL)
+    # =========================================================================
+    escalera_local = None
+    if poly_escalera and nivel > 1:
+        nivel_escalera = nivel - 1
+
+        # Create stair at origin, with correct Z level.
+        # It will be placed and rotated along with the other components.
+        escalera_local = create_stairs(
+            ensamblaje=None,
+            ancho_hab=ancho_hab,
+            desplazamiento_x=0,
+            desplazamiento_y=0,
+            sufijo_nombre=sufijo_nombre,
+            posicion_puerta=posicion_puerta,
+            nivel=nivel_escalera,
+            orientacion="vertical", # Always create horizontal
+            desplazamiento_x_bloque=0,
+            desplazamiento_y_bloque=0
+        )
+
+        poly_escalera_alineado = affinity.rotate(poly_escalera, -angulo_grados, origin=pivote_2d)
+        esc_min_x, esc_min_y, _, _ = poly_escalera_alineado.bounds
+        bbox_local_stair = escalera_local.val().BoundingBox()
+        
+        dx = esc_min_x - bbox_local_stair.xmin
+        dy = esc_min_y - bbox_local_stair.ymin
+        escalera_local = escalera_local.translate((dx, dy, 0))
+
+    # =========================================================================
+    # 8. CORTES FINALES DE VENTANAS Y ENSAMBLAJE DE ESTRUCTURA SOPORTE
     # =========================================================================
     for cortador_ventana in ventanas_cortadores:
         muros_locales = muros_locales.cut(cortador_ventana)
@@ -261,7 +297,7 @@ def create_structure(
     )
 
     # =========================================================================
-    # 8. ROTACIÓN DE VOLÚMENES COMPLETOS AL ÁNGULO REAL DEL TERRENO
+    # 9. ROTACIÓN DE VOLÚMENES COMPLETOS AL ÁNGULO REAL DEL TERRENO
     # =========================================================================
     pivote_3d = (pivote_2d.x, pivote_2d.y, 0)
     eje_rotacion_z = (pivote_2d.x, pivote_2d.y, 1)
@@ -273,55 +309,16 @@ def create_structure(
     puertas_lista = [p.rotate(pivote_3d, eje_rotacion_z, angulo_grados) for p in puertas_lista_local]
     ventanas_paneles_lista = [w.rotate(pivote_3d, eje_rotacion_z, angulo_grados) for w in ventanas_paneles_local]
 
-    # =========================================================================
-    # 9. ESCALERAS (Rotadas y Desplazadas con Precisión)
-    # =========================================================================
-    if nivel > 1:
-        nivel_escalera = nivel - 1
-        
-        # Obtener las dimensiones reales de la escalera para el posicionamiento
-        stair_dims = get_stair_dimensions(huella=0.28, contrahuella_max=0.17)
-        largo_escalera_x = stair_dims['largo_total_x']
-        ancho_escalera_y = stair_dims['ancho_total_y']
+    if escalera_local:
+        escalera_final = escalera_local.rotate(pivote_3d, eje_rotacion_z, angulo_grados)
+        nombre_escalera = f"Escalera {sufijo_nombre} - Nivel {nivel_escalera}"
+        ensamblaje.add(escalera_final, name=nombre_escalera, color=cq.Color("#888888"))
+        if factory_capas:
+            factory_capas.add_in_capa_auto(workplane=escalera_final, nivel=nivel_escalera, name=nombre_escalera)
 
-        # Las calculamos de forma local alineada y dejamos que la rotación se calcule
-        # Se ubica la escalera fuera del bloque, pegada al extremo izquierdo.
-        # NOTA: Con orientacion="vertical", las dimensiones se invierten en el plano XY.
-        # El ancho en el eje X corresponde a 'ancho_escalera_y'.
-        desplazamiento_x_escalera = desplazamiento_x - ancho_escalera_y
-        if posicion_puerta == "bottom":
-            # Se ubica fuera del bloque, en el lado de las puertas ('bottom')
-            # El largo en el eje Y corresponde a 'largo_escalera_x'.
-            desplazamiento_y_escalera = desplazamiento_y - largo_escalera_x
-        else:
-            # Se ubica fuera del bloque, en el lado de las puertas ('top')
-            desplazamiento_y_escalera = desplazamiento_y + ancho_hab
-
-        # Se crea la escalera con su propia lógica de orientación y posición
-        escalera = create_stairs(
-            ensamblaje=ensamblaje,
-            ancho_hab=ancho_hab,
-            desplazamiento_x=desplazamiento_x_escalera,
-            desplazamiento_y=desplazamiento_y_escalera,
-            sufijo_nombre=sufijo_nombre,
-            posicion_puerta=posicion_puerta,
-            nivel=nivel_escalera,
-            orientacion="vertical",
-            huella=0.28,
-            contrahuella_max=0.17,
-            desplazamiento_x_bloque=desplazamiento_x,
-            desplazamiento_y_bloque=desplazamiento_y
-        )
-        # Rotamos la escalera terminada sobre el mismo eje de normalización
-        escalera = escalera.rotate(pivote_3d, eje_rotacion_z, angulo_grados)
-        
-        name_obj = f"Escalera {sufijo_nombre} - Nivel {nivel_escalera}"
-        factory_capas.add_in_capa_auto(workplane=escalera, nivel=nivel - 1, name=name_obj)
-        
-        ensamblaje.add(escalera, name=name_obj, color=cq.Color("#BCBDBE"))
 
     # =========================================================================
-    # 10. GENERACIÓN DE TECHOS
+    # 10. GENERACIÓN DE TECHOS (si aplica)
     # =========================================================================
     if max_nivel == nivel:
         if CONFIG_PROYECTO.get("zona_climatica") == "z1":
@@ -393,3 +390,14 @@ def create_structure(
 
     for j, ventana_solido in enumerate(ventanas_paneles_lista):
         ensamblaje.add(ventana_solido, name=f"Ventana {sufijo_nombre} - Nivel {nivel} - {j+1}", color=cq.Color(0.29, 0.29, 0.29, 0.5))
+
+    # Return values needed for stairs and other external components
+    return {
+        "largo_bloque_fijo": largo_bloque_fijo,
+        "ancho_hab": ancho_hab,
+        "desplazamiento_x": desplazamiento_x,
+        "desplazamiento_y": desplazamiento_y,
+        "pivote_2d": pivote_2d,
+        "angulo_grados": angulo_grados,
+        "is_original_vertical": (dim_y > dim_x) # True if original polygon was taller than wide
+    }

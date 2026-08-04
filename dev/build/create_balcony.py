@@ -5,6 +5,7 @@ from shapely import affinity
 
 from bim.config_proyect import CONFIG_PROYECTO
 from bim.capas import FactoryCapas
+from bim.creations.escaleras import get_stair_dimensions
 
 def create_balcony(
     ensamblaje,
@@ -71,30 +72,36 @@ def create_balcony(
     # =========================================================================
     altura_piso = CONFIG_PROYECTO['alto_nivel']
     e_muro = CONFIG_PROYECTO['e_muro']
-    ancho_escalera = CONFIG_PROYECTO["ancho_escalera"]
 
     grosor_losa = 0.10
     alto_parapeto = 1.20
     desfase_z = (nivel - 1) * altura_piso
 
-    # El balcón se extiende en los extremos para cubrir las zonas de escaleras fijas
-    largo_total_balcon = largo_bloque_fijo + (ancho_escalera * 2)
+    # Para que el balcón contenga a la escalera, su ancho debe ser al menos el de la escalera.
+    stair_dims = get_stair_dimensions()
+
+    # El voladizo del balcón debe usar el largo total de la escalera en X para cubrirla por completo.
+    largo_real_escalera_x = stair_dims['largo_total_x']
+    largo_total_balcon = largo_bloque_fijo + largo_real_escalera_x
+    ancho_real_escalera_y = stair_dims['ancho_total_y']
+    ancho_balcon_final = max(ancho_balcon, ancho_real_escalera_y)
 
     # =========================================================================
     # 3. DETERMINAR POSICIÓN LOCAL Y DEL BALCÓN (Según orientación de puerta)
     # =========================================================================
     if posicion_puerta.lower() == "bottom":
-        y_local_min = desplazamiento_y - ancho_balcon
+        y_local_min = desplazamiento_y - ancho_balcon_final
         y_local_max = desplazamiento_y
-        y_parapeto_frontal = (desplazamiento_y - ancho_balcon) + (e_muro / 2)
-        centro_y_lateral = desplazamiento_y - (ancho_balcon / 2) - (e_muro / 2)
+        y_parapeto_frontal = (desplazamiento_y - ancho_balcon_final) + (e_muro / 2)
+        centro_y_lateral = desplazamiento_y - (ancho_balcon_final / 2) - (e_muro / 2)
     else:  # "top"
         y_local_min = desplazamiento_y + ancho_hab
-        y_local_max = desplazamiento_y + ancho_hab + ancho_balcon
-        y_parapeto_frontal = (desplazamiento_y + ancho_hab + ancho_balcon) - (e_muro / 2)
-        centro_y_lateral = desplazamiento_y + ancho_hab + (ancho_balcon / 2) + (e_muro / 2)
+        y_local_max = desplazamiento_y + ancho_hab + ancho_balcon_final
+        y_parapeto_frontal = (desplazamiento_y + ancho_hab + ancho_balcon_final) - (e_muro / 2)
+        centro_y_lateral = desplazamiento_y + ancho_hab + (ancho_balcon_final / 2) + (e_muro / 2)
 
-    centro_x_balcon = (largo_total_balcon / 2) + desplazamiento_x
+    # El centro X se calcula para que el balcón comience en 'desplazamiento_x' y se extienda hacia la derecha.
+    centro_x_balcon = desplazamiento_x + (largo_total_balcon / 2)
     centro_y_balcon = (y_local_min + y_local_max) / 2
     centro_z_balcon = (grosor_losa / 2) + desfase_z
 
@@ -104,7 +111,7 @@ def create_balcony(
     # 4.1 Losa base
     balcon_solido = (
         cq.Workplane("XY")
-        .box(largo_total_balcon, ancho_balcon, grosor_losa)
+        .box(largo_total_balcon, ancho_balcon_final, grosor_losa)
         .translate((centro_x_balcon, centro_y_balcon, centro_z_balcon))
     )
 
@@ -119,7 +126,7 @@ def create_balcony(
     )
 
     # Parapetos Laterales
-    largo_parapeto_lat = ancho_balcon - e_muro
+    largo_parapeto_lat = ancho_balcon_final - e_muro
     x_lateral_izq = desplazamiento_x + (e_muro / 2)
     x_lateral_der = desplazamiento_x + largo_total_balcon - (e_muro / 2)
 
