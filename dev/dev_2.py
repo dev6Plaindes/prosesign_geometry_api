@@ -178,14 +178,14 @@ max_nivel_secundaria = len(distribucion_sec)
 
 poly_escalera_sec = crear_poligono_escalera(secundaria, container_secundaria, lado="izquierda")
 
-new_block(
-    polygon=poly_escalera_sec,
-    alto_z=0.3,
-    assembly=mi_modelo,
-    nombre="Esc Secundaria",
-    color_hex="#D8D8D8",
-    factory_capas=factory_capas
-)
+# new_block(
+#     polygon=poly_escalera_sec,
+#     alto_z=0.3,
+#     assembly=mi_modelo,
+#     nombre="Esc Secundaria",
+#     color_hex="#D8D8D8",
+#     factory_capas=factory_capas
+# )
 
 for index, piso_data in enumerate(distribucion_sec):
     nivel_actual = index + 1

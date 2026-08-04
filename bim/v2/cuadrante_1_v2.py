@@ -17,6 +17,7 @@ from dev.types import DataAmbientes
 from dev.utils.calculate_medidas import largos_for_piso_and_ambiente, limpiar_distribucion_para_resumen, obtener_polygon_real_del_piso
 from dev.utils.largo_ancho_cuadrante import obtener_dimensiones_cuadrante
 from bim.upload_aws_file import subir_archivo_a_s3, obtener_archivo_en_binario
+from bim.creations.escaleras import crear_poligono_escalera
 from dev.utils.tools import div_logic, div_logic_with_spacing, obtener_sub_polygon_centrado
 
 # Generacion del cuadrante 1 en el plano Version 2
@@ -55,12 +56,14 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
     )
 
     # 5. Agregamos el Terreno Real usando la data ya normalizada
-    terreno_assembly(
+    _, terreno_wokrplane =terreno_assembly(
         vertices_dict=terreno_norm,
         assembly=mi_modelo,
         nombre="Terreno Real (Polígono)",
         color_hex="#2ECC71" # Verde para el terreno real
     )
+
+    factory_capas.add_terreno(terreno_wokrplane, name="Terreno_Base")
 
 
     largo_cuadrante, ancho_cuadrante = obtener_dimensiones_cuadrante(cuadrante_norm)
@@ -102,8 +105,16 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
         create_structure los rotará 90 grados para trabajar. En esa rotación, el lado derecho (+X)
         se convierte en el lado superior (+Y, 'top'), y el izquierdo (-X) en el inferior (-Y, 'bottom').
         """
-        # Se fuerza a que todos los balcones estén en el lado derecho ('top').
-        return "top"
+        centro_pabellon = pabellon_polygon.centroid
+        
+        # Si el pabellón está a la izquierda del centro, su puerta debe estar en su lado derecho.
+        # Lado derecho (+X) se convierte en 'top'.
+        if centro_pabellon.x < centro_layout.x:
+            return "top"
+        # Si el pabellón está a la derecha del centro, su puerta debe estar en su lado izquierdo.
+        # Lado izquierdo (-X) se convierte en 'bottom'.
+        else:
+            return "bottom"
         
     pos_puerta_primaria = determinar_posicion_puerta(primaria, centro_absoluto, "primaria")
     pos_puerta_secundaria = determinar_posicion_puerta(secundaria, centro_absoluto, "secundaria")
@@ -122,6 +133,16 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
     if distribucion_primaria:
         container_primaria = obtener_polygon_real_del_piso(distribucion_primaria[0], primaria)
         max_nivel_primaria = len(distribucion_primaria)
+        poly_escalera_primaria = crear_poligono_escalera(primaria, container_primaria)
+
+        new_block(
+            polygon=pasadizo_primaria,
+            alto_z=0.3,
+            assembly=mi_modelo,
+            nombre="Pasadizo Primaria - Nivel 1",
+            color_hex="#D8D8D8",
+            factory_capas=factory_capas
+        )
 
         for index, piso_data in enumerate(distribucion_primaria):
             nivel_actual = index + 1
@@ -131,6 +152,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
             create_structure(
                 ensamblaje=mi_modelo,
                 polygon=container_primaria,                       # El Polygon de Shapely del tramo
+                poly_escalera=poly_escalera_primaria,
                 largos_habitaciones=largos_habitaciones_piso,
                 sufijo_nombre="Primaria",
                 posicion_puerta=pos_puerta_primaria,                  # Orientación de la puerta (top/bottom)
@@ -149,15 +171,6 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
                 ancho_balcon=1.8,
                 factory_capas=factory_capas
             )
-
-        new_block(
-            polygon=pasadizo_primaria,
-            alto_z=0.3,
-            assembly=mi_modelo,
-            nombre="Pasadizo Primaria - Nivel 1",
-            color_hex="#D8D8D8",
-            factory_capas=factory_capas
-        )
     else:
         logging.warning("No se encontraron datos de ambientes para Primaria o no se pudo generar la distribución. Omitiendo pabellón de Primaria.")
 
@@ -173,6 +186,16 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
     if distribucion_sec:
         container_secundaria = obtener_polygon_real_del_piso(distribucion_sec[0], secundaria)
         max_nivel_secundaria = len(distribucion_sec)
+        poly_escalera_sec = crear_poligono_escalera(secundaria, container_secundaria, lado="izquierda")
+
+        new_block(
+            polygon=pasadizo_secundaria,
+            alto_z=0.3,
+            assembly=mi_modelo,
+            nombre="Pasadizo Secundaria Nivel 1",
+            color_hex="#D8D8D8",
+            factory_capas=factory_capas
+        )
 
         for index, piso_data in enumerate(distribucion_sec):
             nivel_actual = index + 1
@@ -182,6 +205,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
             create_structure(
                 ensamblaje=mi_modelo,
                 polygon=container_secundaria,                       # El Polygon de Shapely del tramo
+                poly_escalera=poly_escalera_sec,
                 largos_habitaciones=largos_habitaciones_piso,
                 sufijo_nombre="Secundaria",
                 posicion_puerta=pos_puerta_secundaria,                  # Orientación de la puerta (top/bottom)
@@ -200,15 +224,6 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
                 ancho_balcon=1.8,
                 factory_capas=factory_capas
             )
-
-        new_block(
-            polygon=pasadizo_secundaria,
-            alto_z=0.3,
-            assembly=mi_modelo,
-            nombre="Pasadizo Secundaria Nivel 1",
-            color_hex="#D8D8D8",
-            factory_capas=factory_capas
-        )
     else:
         logging.warning("No se encontraron datos de ambientes para Secundaria o no se pudo generar la distribución. Omitiendo pabellón de Secundaria.")
 
@@ -224,6 +239,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
     if distribucion_inicial:
         container_inicial = obtener_polygon_real_del_piso(distribucion_inicial[0], inicial)
         max_nivel_inicial = len(distribucion_inicial)
+        poly_escalera_inicial = crear_poligono_escalera(inicial, container_inicial, lado="izquierda")
 
         for index, piso_data in enumerate(distribucion_inicial):
             nivel_actual = index + 1
@@ -233,6 +249,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
             create_structure(
                 ensamblaje=mi_modelo,
                 polygon=container_inicial,                       # El Polygon de Shapely del tramo
+                poly_escalera=poly_escalera_inicial,
                 largos_habitaciones=largos_habitaciones_piso,
                 sufijo_nombre="Inicial",
                 posicion_puerta=pos_puerta_inicial,             # Orientación de la puerta (top/bottom)
@@ -266,6 +283,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
     if distribucion_admin:
         container_admin = obtener_polygon_real_del_piso(distribucion_admin[0], admin)
         max_nivel_admin = len(distribucion_admin)
+        poly_escalera_admin = crear_poligono_escalera(admin, container_admin, lado="izquierda", posicion_vertical="bottom")
 
         for index, piso_data in enumerate(distribucion_admin):
             nivel_actual = index + 1
@@ -275,6 +293,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
             create_structure(
                 ensamblaje=mi_modelo,
                 polygon=container_admin,                       # El Polygon de Shapely del tramo
+                poly_escalera=poly_escalera_admin,
                 largos_habitaciones=largos_habitaciones_piso,
                 sufijo_nombre="Admin",
                 posicion_puerta=pos_puerta_admin,             # Orientación de la puerta (top/bottom)
@@ -389,7 +408,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
                 polygon=sum_ambiente,                       # El Polygon de Shapely del tramo
                 largos_habitaciones=[sum_salon_usos_mult_val["Largo"]],
                 sufijo_nombre="SUM",
-                posicion_puerta="top",             # Orientación de la puerta (top/bottom)
+                posicion_puerta="bottom",             # Orientación de la puerta (top/bottom)
                 nivel=1,
                 max_nivel=1,
                 names_ambientes=["SUM"],
