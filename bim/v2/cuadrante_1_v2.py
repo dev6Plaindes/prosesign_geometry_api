@@ -411,7 +411,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
                 posicion_puerta="bottom",             # Orientación de la puerta (top/bottom)
                 nivel=1,
                 max_nivel=1,
-                names_ambientes=["SUM"],
+                names_ambientes=["Sala de Usos Múltiples"],
                 factory_capas=factory_capas
             )
 

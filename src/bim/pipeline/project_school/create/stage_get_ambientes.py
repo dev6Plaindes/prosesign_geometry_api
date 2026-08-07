@@ -61,20 +61,43 @@ def stage_get_ambientes(ctx: PipelineContext):
 
     # ==================== LISTA OFICIAL DE AMBIENTES COMPLEMENTARIOS ====================
     complementarios_posibles = {
-        "SALA DE USOS MÚLTIPLES (SUM)", #OK
-        "COCINA ESCOLAR", #ok
-        "COMEDOR", #ok
-        "DIRECCIÓN ADMINISTRATIVA", #ok
+        "SALA DE USOS MÚLTIPLES (SUM)",
+        "COCINA ESCOLAR",
+        "DIRECCIÓN ADMINISTRATIVA",
+        "PATIO INICIAL",
         "AUDITORIO MULTIUSOS",
-        "SALA DE REUNIONES", #ok
-        "LACTARIO", #ok
-        "SALA DE PSICOMOTRICIDAD", #ok
-        "TOPICO", #OK
+        "SALA DE REUNIONES",
+        "LACTARIO",
+        "TOPICO",
+        "SALA DE PSICOMOTRICIDAD",
         "SALA DE MAESTROS",
-        "SALA DE PROFESORES",
-        "PATIO INICIAL" #OK,
         "BIBLIOTECA",
-        "AREA DE ESPERA"
+        "TALLER CREATIVO",
+        "AREA DE ESPERA",
+        "AULA DE INNOVACION SEC",
+        "TALLER CREATIVO SEC",
+        "LABORATORIO",
+        "ESCALERA SEC",
+        "SSHH SEC - HOMBRES",
+        "SSHH SEC - MUJERES",
+        "AULA DE INNOVACION PRIM",
+        "TALLER CREATIVO PRIM",
+        "ESCALERA PRIM",
+        "SSHH PRIM - HOMBRES",
+        "SSHH PRIM - MUJERES",
+        "SSHH INICIAL - HOMBRES",
+        "SSHH INICIAL - MUJERES",
+        "COCINA INICIAL",
+        "DIRECCION ADM.",
+        "ÁREA DE ESPERA",
+        "AREA DE INGRESO",
+        "SALA DE PROFESORES",
+        "SSHH ADM. - HOMBRES",
+        "SSHH ADM. - MUJERES",
+        "LOSA DEPORTIVA",
+        "TALLER EPT",
+        "SUM",
+        "COCINA PRIM - SEC",
     }
 
     if not getattr(ctx.request, 'ambientes', None):
@@ -173,21 +196,43 @@ def stage_get_ambientes_test(ctx: PipelineContext):
 
     # ==================== LISTA OFICIAL DE AMBIENTES COMPLEMENTARIOS ====================
     complementarios_posibles = {
-        "SALA DE USOS MÚLTIPLES (SUM)", #OK
-        "COCINA ESCOLAR", #ok
-        "COMEDOR", #ok
-        "DIRECCIÓN ADMINISTRATIVA", #ok
+        "SALA DE USOS MÚLTIPLES (SUM)",
+        "COCINA ESCOLAR",
+        "DIRECCIÓN ADMINISTRATIVA",
+        "PATIO INICIAL",
         "AUDITORIO MULTIUSOS",
-        "SALA DE REUNIONES", #ok
-        "LACTARIO", #ok
-        "SALA DE PSICOMOTRICIDAD", #ok
-        "TOPICO", #OK
+        "SALA DE REUNIONES",
+        "LACTARIO",
+        "TOPICO",
+        "SALA DE PSICOMOTRICIDAD",
         "SALA DE MAESTROS",
-        "SALA DE PROFESORES",
-        "PATIO INICIAL" #OK,
-        "TALLER CREATIVO" #OK,
+        "BIBLIOTECA",
+        "TALLER CREATIVO",
         "AREA DE ESPERA",
-        "BIBLIOTECA"
+        "AULA DE INNOVACION SEC",
+        "TALLER CREATIVO SEC",
+        "LABORATORIO",
+        "ESCALERA SEC",
+        "SSHH SEC - HOMBRES",
+        "SSHH SEC - MUJERES",
+        "AULA DE INNOVACION PRIM",
+        "TALLER CREATIVO PRIM",
+        "ESCALERA PRIM",
+        "SSHH PRIM - HOMBRES",
+        "SSHH PRIM - MUJERES",
+        "SSHH INICIAL - HOMBRES",
+        "SSHH INICIAL - MUJERES",
+        "COCINA INICIAL",
+        "DIRECCION ADM.",
+        "ÁREA DE ESPERA",
+        "AREA DE INGRESO",
+        "SALA DE PROFESORES",
+        "SSHH ADM. - HOMBRES",
+        "SSHH ADM. - MUJERES",
+        "LOSA DEPORTIVA",
+        "TALLER EPT",
+        "SUM",
+        "COCINA PRIM - SEC",
     }
 
     if not getattr(ctx.request, 'ambientes', None):

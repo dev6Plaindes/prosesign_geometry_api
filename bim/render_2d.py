@@ -87,13 +87,27 @@ ESTILOS = {
         "fill_color": None,
         "legend": False,
     },
-    "Aula": {
-        "line_color": "lightblue",
-        "line_width": 1,
-        "dash": None,
-        "fill_color": "lightblue",
-        "legend": True,
-    },
+    "Aula de Innovacion": {
+                "line_color": "green",
+                "line_width": 1,
+                "dash": None,
+                "fill_color": "green",
+                "legend": True,
+            },
+    "Aulas Primaria": {
+            "line_color": "lightblue",
+            "line_width": 1,
+            "dash": None,
+            "fill_color": "lightblue",
+            "legend": True,
+        },
+    "Aulas Secundaria": {
+            "line_color": "lightgreen",
+            "line_width": 1,
+            "dash": None,
+            "fill_color": "lightgreen",
+            "legend": True,
+        },
     "Biblioteca": {
         "line_color": "lightgreen",
         "line_width": 1,
@@ -122,13 +136,13 @@ ESTILOS = {
         "fill_color": "beige",
         "legend": True,
     },
-    "Sala": {
-        "line_color": "ivory",
-        "line_width": 1,
-        "dash": None,
-        "fill_color": "ivory",
-        "legend": True,
-    },
+    # "Sala": {
+    #     "line_color": "ivory",
+    #     "line_width": 1,
+    #     "dash": None,
+    #     "fill_color": "ivory",
+    #     "legend": True,
+    # },
     "Área de": {
         "line_color": "lavender",
         "line_width": 1,
@@ -171,11 +185,11 @@ ESTILOS = {
             "fill_color": "white",
             "legend": False,  # ¡Importante para que aparezca en la leyenda!
         },
-    "Sala de Usos Múltiples (SUM)": {
-        "line_color": "gray",  # O el color que prefieras para la losa
+    "Sala de Usos Múltiples": {
+        "line_color": "orange",  # O el color que prefieras para la losa
         "line_width": 1,
         "dash": None,
-        "fill_color": "white",
+        "fill_color": "orange",
         "legend": True,  # ¡Importante para que aparezca en la leyenda!
     },
     # [Ambiente_1 1] SUM
