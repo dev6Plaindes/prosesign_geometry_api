@@ -70,19 +70,29 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
     print(f"📐 Dimensiones del Cuadrante: Largo (X) = {largo_cuadrante:.3f} m | Ancho (Y) = {ancho_cuadrante:.3f} m")
     CONFIG_PROYECTO["ancho_cuadrante"] = ancho_cuadrante
     CONFIG_PROYECTO["largo_cuadrante"] = largo_cuadrante
-
-    # offset_x, offset_y = offset_local
+    
+    # =========================================================================
+    # ADAPTACIÓN DINÁMICA A LA ORIENTACIÓN DEL CUADRANTE
+    # =========================================================================
+    if largo_cuadrante >= ancho_cuadrante:
+        eje_principal = "x"  # El lado más largo es el eje X
+        eje_secundario = "y"
+    else:
+        eje_principal = "y"  # El lado más largo es el eje Y
+        eje_secundario = "x"
+    print(f"Orientación detectada: Eje Principal = '{eje_principal}', Eje Secundario = '{eje_secundario}'")
 
     ancho_pasadiso=CONFIG_PROYECTO["ancho_pasadiso"]
     ancho_aula=CONFIG_PROYECTO["ancho_aula"]
 
     medidas = [ancho_aula, ancho_pasadiso, "auto", ancho_pasadiso, ancho_aula]
 
-    # # Llamada a la función
-    tramos_poligonos = div_logic(medidas, cuadrante_shapely, eje_div="x")
+    # Se divide a lo largo del eje principal (el más largo)
+    tramos_poligonos = div_logic(medidas, cuadrante_shapely, eje_div=eje_principal)
     primaria, pasadizo_primaria, space_centro_1, pasadizo_secundaria, secundaria =tramos_poligonos
 
-    tramos_poligonos_2 = div_logic(medidas, space_centro_1, eje_div="x")
+    # La subdivisión del centro también sigue el eje principal
+    tramos_poligonos_2 = div_logic(medidas, space_centro_1, eje_div=eje_principal)
     admin, pasadizo_admin, space_centro_2, pasadizo_inicial, inicial =tramos_poligonos_2
 
     # Agrupas todo en una sola llamada
@@ -98,7 +108,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
     # Lógica para determinar la orientación de la puerta hacia el centro
     centro_absoluto = space_centro_2.centroid
 
-    def determinar_posicion_puerta(pabellon_polygon, centro_layout, nombre_pabellon):
+    def determinar_posicion_puerta(pabellon_polygon, centro_layout, nombre_pabellon, eje_principal_division):
         """
         Determina si la puerta debe estar en el lado 'top' o 'bottom' para que mire hacia el patio central.
         La lógica asume que los pabellones son más largos que anchos (verticales) y que la función 
@@ -106,20 +116,32 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
         se convierte en el lado superior (+Y, 'top'), y el izquierdo (-X) en el inferior (-Y, 'bottom').
         """
         centro_pabellon = pabellon_polygon.centroid
-        
-        # Si el pabellón está a la izquierda del centro, su puerta debe estar en su lado derecho.
-        # Lado derecho (+X) se convierte en 'top'.
-        if centro_pabellon.x < centro_layout.x:
-            return "top"
-        # Si el pabellón está a la derecha del centro, su puerta debe estar en su lado izquierdo.
-        # Lado izquierdo (-X) se convierte en 'bottom'.
-        else:
-            return "bottom"
-        
-    pos_puerta_primaria = determinar_posicion_puerta(primaria, centro_absoluto, "primaria")
-    pos_puerta_secundaria = determinar_posicion_puerta(secundaria, centro_absoluto, "secundaria")
-    pos_puerta_inicial = determinar_posicion_puerta(inicial, centro_absoluto, "inicial")
-    pos_puerta_admin = determinar_posicion_puerta(admin, centro_absoluto, "admin")
+
+        if eje_principal_division == 'x':
+            # Pabellones a izquierda/derecha del centro.
+            # Si el pabellón está a la izquierda del centro, su puerta debe estar en su lado derecho.
+            # Lado derecho (+X) se convierte en 'top'.
+            if centro_pabellon.x < centro_layout.x:
+                return "top"
+            # Si el pabellón está a la derecha del centro, su puerta debe estar en su lado izquierdo.
+            # Lado izquierdo (-X) se convierte en 'bottom'.
+            else:
+                return "bottom"
+        else: # 'y'
+            # Pabellones arriba/abajo del centro.
+            # Si el pabellón está abajo del centro, su puerta debe estar en su lado superior.
+            # Lado superior (+Y) se convierte en 'top'.
+            if centro_pabellon.y < centro_layout.y:
+                return "top"
+            # Si el pabellón está arriba del centro, su puerta debe estar en su lado inferior.
+            # Lado inferior (-Y) se convierte en 'bottom'.
+            else:
+                return "bottom"
+
+    pos_puerta_primaria = determinar_posicion_puerta(primaria, centro_absoluto, "primaria", eje_principal)
+    pos_puerta_secundaria = determinar_posicion_puerta(secundaria, centro_absoluto, "secundaria", eje_principal)
+    pos_puerta_inicial = determinar_posicion_puerta(inicial, centro_absoluto, "inicial", eje_principal)
+    pos_puerta_admin = determinar_posicion_puerta(admin, centro_absoluto, "admin", eje_principal)
 
     # PRIMARIA
     distribucion_primaria = []
@@ -366,17 +388,17 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
         ancho_losa, 
         ancho_sum
     ]
-    tramos_centro = div_logic_with_spacing(medidas_centro, space_centro_2, eje_div="y")
+    tramos_centro = div_logic_with_spacing(medidas_centro, space_centro_2, eje_div=eje_secundario)
     space_patio, centro_3, space_sum = tramos_centro if len(tramos_centro) == 3 else (None, None, None)
 
     # 4. Creación condicional de geometrías (Solo si existen)
     if patio_inicial_values and space_patio:
-        tramos_patio = div_logic(["auto", largo_patio, "auto"], space_patio, eje_div="y")
+        tramos_patio = div_logic(["auto", largo_patio, "auto"], space_patio, eje_div=eje_secundario)
         if len(tramos_patio) == 3:
             _, patio_inicial, _ = tramos_patio
 
     if patio_losa_dep_values and centro_3:
-        tramos_losa = div_logic(["auto", largo_losa, "auto"], centro_3, eje_div="y")
+        tramos_losa = div_logic(["auto", largo_losa, "auto"], centro_3, eje_div=eje_secundario)
         if len(tramos_losa) == 3:
             _, losa_deportiva, _ = tramos_losa
     # Salon de usos multiples
