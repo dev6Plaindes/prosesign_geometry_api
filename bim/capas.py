@@ -29,6 +29,7 @@ class FactoryCapas:
 
     # 🔥 TERRENO AHORA ES INMUTABLE (Compound)
     terreno: list = field(default_factory=list)  # (compound, name)
+    cuadrante: list = field(default_factory=list) # (compound, name)
 
     def __post_init__(self):
         self.id_factory = token_hex(8)
@@ -53,38 +54,42 @@ class FactoryCapas:
         self.capas.append(capa_nueva)
 
         # 🔥 inyectar terreno automáticamente
-        self._add_terreno_to_capa(capa_assembly)
+        self._add_base_geometries_to_capa(capa_assembly)
 
         return capa_assembly
 
-    # ====================== TERRENO ======================
-
-    def add_terreno(self, workplane : Workplane, name="TERRENO"):
+    # ====================== GEOMETRÍAS BASE (Terreno, Cuadrante) ======================
+    def _add_base_geometries_to_capa(self, capa_assembly: Assembly):
         """
-        Guarda terreno como geometría fija (Compound)
-        y lo replica en todas las capas.
+        Inserta todas las geometrías base (terreno, cuadrante) en una capa específica.
         """
-
-        # 🔴 FIX IMPORTANTE: convertir a geometría final
-        compound = workplane.val()
-
-        self.terreno.append((compound, name))
-
-        # aplicar a todas las capas existentes
-        for capa in self.capas:
-            self._add_terreno_to_capa(capa.cq_assembly)
-
-    def _add_terreno_to_capa(self, capa_assembly: Assembly):
-        """
-        Inserta terreno en una capa específica.
-        """
-
         posicion = Vector(0, 0, 0)
         eje_rotacion = Vector(0, 0, 1)
         loc = Location(posicion, eje_rotacion, 0)
 
         for solid, name in self.terreno:
             capa_assembly.add(solid, name=name, loc=loc)
+        
+        for solid, name in self.cuadrante:
+            capa_assembly.add(solid, name=name, loc=loc)
+
+    def add_terreno(self, workplane : Workplane, name="TERRENO"):
+        """
+        Guarda terreno como geometría fija (Compound) y lo replica en todas las capas.
+        """
+        compound = workplane.val()
+        self.terreno.append((compound, name))
+        for capa in self.capas:
+            self._add_base_geometries_to_capa(capa.cq_assembly)
+
+    def add_cuadrante(self, workplane: Workplane, name="CUADRANTE"):
+        """
+        Guarda el cuadrante como geometría fija (Compound) y lo replica en todas las capas.
+        """
+        compound = workplane.val()
+        self.cuadrante.append((compound, name))
+        for capa in self.capas:
+            self._add_base_geometries_to_capa(capa.cq_assembly)
 
     # ====================== ELEMENTOS NORMALES ======================
 

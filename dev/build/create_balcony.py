@@ -9,6 +9,7 @@ from bim.creations.escaleras import get_stair_dimensions
 
 def create_balcony(
     ensamblaje,
+    polygon_pabellon: Polygon,
     polygon: Polygon,
     sufijo_nombre: str,
     posicion_puerta: str = "bottom",
@@ -41,6 +42,20 @@ def create_balcony(
     elif angulo_grados < -90:
         angulo_grados += 180
 
+    # --- ANÁLISIS DE ORIENTACIÓN BASADO EN polygon_pabellon ---
+    # Rotar temporalmente el pabellón a 0° para medir sus dimensiones reales
+    pivote_pabellon_2d = polygon_pabellon.centroid
+    pabellon_alineado = affinity.rotate(polygon_pabellon, -angulo_grados, origin=pivote_pabellon_2d)
+    
+    # Obtener cotas del pabellón alineado
+    min_x_pab, min_y_pab, max_x_pab, max_y_pab = pabellon_alineado.bounds
+    dim_x_pab = max_x_pab - min_x_pab
+    dim_y_pab = max_y_pab - min_y_pab
+
+    # --- ANÁLISIS DE DIMENSIONES BASADO EN polygon (el contenedor real del piso) ---
+    if angulo_grados < -90:
+        angulo_grados += 180
+
     # Rotar temporalmente a 0° usando su propio centroide plano como pivote
     pivote_2d = polygon.centroid
     poly_alineado = affinity.rotate(polygon, -angulo_grados, origin=pivote_2d)
@@ -50,8 +65,8 @@ def create_balcony(
     dim_x = max_x - min_x
     dim_y = max_y - min_y
 
-    # Asegurarse de que el "largo" es la dimensión mayor, alineada con el eje X de trabajo
-    if dim_y > dim_x:
+    # LA DECISIÓN DE ROTACIÓN SE TOMA CON LAS DIMENSIONES DEL PABELLÓN, PERO LA ROTACIÓN SE APLICA AL POLÍGONO DEL PISO
+    if dim_y_pab > dim_x_pab:
         # La dimensión Y es más larga, rotamos 90 grados para que sea la X
         poly_alineado = affinity.rotate(poly_alineado, 90, origin=poly_alineado.centroid)
         angulo_grados -= 90 # Ajustamos el ángulo de rotación final para la georreferenciación inversa

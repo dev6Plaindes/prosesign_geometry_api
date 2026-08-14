@@ -164,7 +164,6 @@ def stage_get_ambientes(ctx: PipelineContext):
 
     logger.info(f"Filtrado completado. Ambientes finales: {len(ctx.ambientes)} | Eliminados: {eliminados}")
     
-    
 def stage_get_ambientes_test(ctx: PipelineContext):
     
     logger.info("PROCESANDO AMBIENTES...")

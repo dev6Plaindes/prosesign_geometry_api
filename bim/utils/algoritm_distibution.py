@@ -1,6 +1,6 @@
 import numpy as np
 import math
-from bim.utils.algoritm_packing_v1 import encontrar_configuracion_ideal
+from bim.utils.algoritm_packing_sequential_first_fit import sequential_first_fit_packing
 
 def solucion_a_lista(solucion_dict):
     filas = []
@@ -25,15 +25,16 @@ def solucion_a_lista(solucion_dict):
 
 # [DOCUMENTACIÓN] Se agregó min_floors para forzar la distribución según la Tarea 5&6.
 def auto_distribution_ambientes_y(data_ambientes, largo_cuadrante, min_floors=1):
-
+ 
     # MEDIDAS
-    largo_escalera = (2.4 + 0.25)
-    largo_banios = 4
+    largo_escalera = 2.4
+    largo_banios = 0
 
     espacio_escalera_banio = largo_escalera + largo_banios
 
     largo_restante = largo_cuadrante - espacio_escalera_banio
 
+    print(f"LARGO RESTANTE={largo_restante}")
     # ---------------- FILTRADO ----------------
     
     ambientes_filtrados = []
@@ -42,12 +43,9 @@ def auto_distribution_ambientes_y(data_ambientes, largo_cuadrante, min_floors=1)
 
         nombre = row["Ambientes"]
 
-        if "SSHH" in nombre:
-            continue
-
         if "Escalera" in nombre:
             continue
-
+        
         # [DOCUMENTACIÓN] Se utiliza un casteo seguro para evitar caídas si la cantidad viene con decimales o cadenas inválidas (ej. #DIV/0!)
         try:
             cantidad = int(float(str(row["Cantidad"]).strip()))
@@ -62,6 +60,7 @@ def auto_distribution_ambientes_y(data_ambientes, largo_cuadrante, min_floors=1)
                 "Ancho": row["Ancho"]
             })
 
+    print("AMBIENTES FILTRADOS", ambientes_filtrados)
     # ------------------------------------------
 
     sum_largo_ambientes_prim = sum(
@@ -70,7 +69,7 @@ def auto_distribution_ambientes_y(data_ambientes, largo_cuadrante, min_floors=1)
 
     # --- CÁLCULO DE PISOS ---
 
-    if sum_largo_ambientes_prim <= largo_restante:
+    if sum_largo_ambientes_prim <= largo_restante or not ambientes_filtrados: # Manejar el caso de lista vacía
         cantidad_pisos_prim = 1
     else:
         cantidad_pisos_prim = max(
@@ -78,12 +77,9 @@ def auto_distribution_ambientes_y(data_ambientes, largo_cuadrante, min_floors=1)
             int(np.ceil(sum_largo_ambientes_prim / largo_restante))
         )
 
-    if cantidad_pisos_prim == 1:
-        largo_restante = largo_cuadrante - largo_banios
-
     # -----------------------
 
-    solucion = encontrar_configuracion_ideal(
+    solucion = sequential_first_fit_packing(
         ambientes_filtrados,
         largo_max_terreno=largo_restante,
         min_floors=min_floors
@@ -112,79 +108,15 @@ def auto_distribution_ambientes_y(data_ambientes, largo_cuadrante, min_floors=1)
         pisos_map[piso].append(row)
 
     # ---------------------------------------------------------
-    # DISTRIBUCIÓN EXACTA
+    # CÁLCULO DE LARGO TOTAL POR PISO (SIN REDISTRIBUCIÓN)
     # ---------------------------------------------------------
 
     for piso, ambientes_piso in pisos_map.items():
-
-        cantidad_ambientes = len(ambientes_piso)
-
-        largo_real_actual = sum(
-            row["Largo_Individual"]
-            for row in ambientes_piso
-        )
-
-        faltante_piso = (
-            largo_contenedor_sol - largo_real_actual
-        )
-
-        incremento_unitario = 0.0
-
-        if faltante_piso > 0:
-            incremento_unitario = (
-                faltante_piso / cantidad_ambientes
-            )
-
+        # Se calcula el largo total real del piso como la suma de los largos individuales.
+        largo_total_piso = sum(row["Largo_Individual"] for row in ambientes_piso)
+        # Se asigna este largo total a cada ambiente del piso, sin modificar sus largos individuales.
         for row in ambientes_piso:
-
-            row["Largo_Individual"] += incremento_unitario
-
-        for row in ambientes_piso:
-
-            row["Largo_Total_Piso"] = largo_contenedor_sol
-
-    # ---------------------------------------------------------
-    # CORRECCIÓN DE REDONDEO
-    # ---------------------------------------------------------
-
-    for piso, ambientes_piso in pisos_map.items():
-
-        cantidad_ambientes = len(ambientes_piso)
-
-        largo_real_actual = sum(
-            row["Largo_Individual"]
-            for row in ambientes_piso
-        )
-
-        faltante_piso = (
-            largo_contenedor_sol - largo_real_actual
-        )
-
-        if faltante_piso > 0:
-
-            incremento_base = (
-                np.floor(
-                    (faltante_piso / cantidad_ambientes) * 100
-                ) / 100
-            )
-
-            for row in ambientes_piso:
-
-                row["Largo_Individual"] += incremento_base
-
-            largo_tras_incremento = sum(
-                row["Largo_Individual"]
-                for row in ambientes_piso
-            )
-
-            residuo_final = round(
-                largo_contenedor_sol - largo_tras_incremento,
-                2
-            )
-
-            if residuo_final != 0:
-
-                ambientes_piso[0]["Largo_Individual"] += residuo_final
+            row["Largo_Total_Piso"] = largo_total_piso
 
     # ---------------------------------------------------------
     # REDONDEO FINAL
@@ -197,7 +129,8 @@ def auto_distribution_ambientes_y(data_ambientes, largo_cuadrante, min_floors=1)
             2
         )
 
-        row["Largo_Total_Piso"] = largo_contenedor_sol
+        # El largo total del piso ya se calculó y asignó, aquí solo lo redondeamos.
+        row["Largo_Total_Piso"] = round(row["Largo_Total_Piso"], 2)
 
         row["ID_Piso"] = f'PISO_{row["Piso"]}'
 

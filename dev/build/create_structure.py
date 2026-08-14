@@ -11,10 +11,12 @@ from bim.creations.techos.techo_z3 import create_techo_z3
 from bim.creations.vigas import _generate_beams_geometry
 from bim.creations.windows import _generate_windows_by_room
 from bim.utils.algoritm_distibution import calcular_posiciones_columnas, encontrar_largo_equilibrado
+from bim.utils.view_ancho_largo_polygon import imprimir_dimensiones_poligono
 from dev.assemblys.capas import FactoryCapas
 
 def create_structure(
     ensamblaje,
+    polygon_pabellon: Polygon,
     polygon: Polygon,
     largos_habitaciones: list,
     sufijo_nombre: str,
@@ -23,13 +25,18 @@ def create_structure(
     max_nivel=1,
     names_ambientes: list = None,
     factory_capas: FactoryCapas = None,
-    poly_escalera: Polygon = None
+    poly_escalera: Polygon = None,
+    anchos_habitaciones: list = None
 ):
     """
     Construye UN solo bloque modular de ambientes variables basándose en un Polygon de Shapely.
     Determina de forma automática el largo (lado mayor), el ancho, y la inclinación espacial.
     Integra columnas, vigas, muros, puertas, ventanas, escaleras y techos de manera georreferenciada.
     """
+    # Imprimir las dimensiones reales de los polígonos de entrada
+    imprimir_dimensiones_poligono(polygon_pabellon, f"Pabellon Contenedor '{sufijo_nombre}'")
+    imprimir_dimensiones_poligono(polygon, f"Piso Contenedor '{sufijo_nombre}' Nivel {nivel}")
+
     # =========================================================================
     # 1. ANALIZAR GEOMETRÍA DEL POLYGON (INCLINACIÓN Y DIMENSIONES REALES)
     # =========================================================================
@@ -45,7 +52,17 @@ def create_structure(
     elif angulo_grados < -90:
         angulo_grados += 180
     
+    # --- ANÁLISIS DE ORIENTACIÓN BASADO EN polygon_pabellon ---
+    # Rotar temporalmente el pabellón a 0° para medir sus dimensiones reales
+    pivote_pabellon_2d = polygon_pabellon.centroid
+    pabellon_alineado = affinity.rotate(polygon_pabellon, -angulo_grados, origin=pivote_pabellon_2d)
+    
+    # Obtener cotas del pabellón alineado
+    min_x_pab, min_y_pab, max_x_pab, max_y_pab = pabellon_alineado.bounds
+    dim_x_pab = max_x_pab - min_x_pab
+    dim_y_pab = max_y_pab - min_y_pab
 
+    # --- ANÁLISIS DE DIMENSIONES BASADO EN polygon (el contenedor real del piso) ---
     # Rotar temporalmente a 0° usando su propio centroide como pivote
     pivote_2d = polygon.centroid
     poly_alineado = affinity.rotate(polygon, -angulo_grados, origin=pivote_2d)
@@ -54,14 +71,15 @@ def create_structure(
     min_x, min_y, max_x, max_y = poly_alineado.bounds
     dim_x = max_x - min_x
     dim_y = max_y - min_y
-    
-    is_original_vertical = False # Flag to indicate if the original polygon was taller than wide
+    print(f"Dimensiones del polígono para '{sufijo_nombre}' (Nivel {nivel}): Ancho (X)={dim_x:.2f}m, Largo (Y)={dim_y:.2f}m")
 
-    # Asegurarse de que el "largo" es la dimensión mayor, alineada con el eje X de trabajo
-    if dim_y > dim_x:
+    is_original_vertical = False  # Flag to indicate if the original polygon was taller than wide
+
+    # LA DECISIÓN SE TOMA CON LAS DIMENSIONES DEL PABELLÓN, PERO LA ROTACIÓN SE APLICA AL POLÍGONO DEL PISO
+    if dim_y_pab > dim_x_pab:
         # La dimensión Y es más larga, rotamos 90 grados para que sea la X
         poly_alineado = affinity.rotate(poly_alineado, 90, origin=poly_alineado.centroid)
-        angulo_grados -= 90 # Adjust final rotation angle for inverse georeferencing
+        angulo_grados -= 90  # Adjust final rotation angle for inverse georeferencing
         # Recalculamos las cotas
         min_x, min_y, max_x, max_y = poly_alineado.bounds
         largo_bloque_fijo = max_x - min_x
@@ -69,7 +87,6 @@ def create_structure(
     else:
         largo_bloque_fijo = dim_x
         ancho_hab = dim_y
-    
     
     # Desplazamientos locales equivalentes
     desplazamiento_x = min_x
@@ -91,15 +108,10 @@ def create_structure(
     # =========================================================================
     # 3. CONSTRUCCIÓN DE MUROS BASE (En coordenadas alineadas de trabajo)
     # =========================================================================
-    muros_locales = (
-        cq.Workplane("XY")
-        .box(largo_total_hab, ancho_total_hab, alto)
-        .translate((
-            largo_total_hab / 2 + desplazamiento_x,
-            ancho_total_hab / 2 + desplazamiento_y,
-            (alto / 2) + desfase_z
-        ))
-    )
+    # Extruir la huella exacta del polígono alineado para respetar anchos variables
+    poly_alineado_points = list(poly_alineado.exterior.coords)
+    base_shape = cq.Workplane("XY").polyline(poly_alineado_points).close()
+    muros_locales = base_shape.extrude(alto).translate((0, 0, desfase_z))
 
     # =========================================================================
     # 4. CÁLCULO DE COLUMNAS ALINEADAS
@@ -155,12 +167,21 @@ def create_structure(
 
     for idx, l_hab in enumerate(largos_corregidos):
         centro_x = borde_x + (l_hab / 2)
-        centro_y = desplazamiento_y + e_muro + (ancho_interior / 2)
+
+        # Usar el ancho individual de la habitación si se proporciona
+        ancho_hab_individual = ancho_hab
+        ancho_interior_individual = ancho_interior
+        if anchos_habitaciones and idx < len(anchos_habitaciones):
+            ancho_hab_individual = anchos_habitaciones[idx]
+            ancho_interior_individual = ancho_hab_individual - (e_muro * 2)
+
+        # El centro Y del cortador debe ser el centro del pabellón para alinear los vaciados
+        centro_y = desplazamiento_y + (ancho_hab / 2)
 
         # A) Vaciado Interior (Cortador)
         cortador = (
             cq.Workplane("XY")
-            .box(l_hab, ancho_interior, alto + 1)
+            .box(l_hab, ancho_interior_individual, alto + 1)
             .translate((
                 centro_x,
                 centro_y,
@@ -179,7 +200,7 @@ def create_structure(
 
         geometria_ambiente = (
             cq.Workplane("XY")
-            .box(l_hab, ancho_interior, alto)
+            .box(l_hab, ancho_interior_individual, alto)
             .translate((
                 centro_x,
                 centro_y,
@@ -255,7 +276,7 @@ def create_structure(
             sufijo_nombre=sufijo_nombre,
             posicion_puerta=posicion_puerta,
             nivel=nivel_escalera,
-            orientacion="vertical", # Always create horizontal
+            orientacion="vertical" if is_original_vertical else "horizontal",
             desplazamiento_x_bloque=0,
             desplazamiento_y_bloque=0
         )
@@ -399,5 +420,5 @@ def create_structure(
         "desplazamiento_y": desplazamiento_y,
         "pivote_2d": pivote_2d,
         "angulo_grados": angulo_grados,
-        "is_original_vertical": (dim_y > dim_x) # True if original polygon was taller than wide
+        "is_original_vertical": (dim_y_pab > dim_x_pab)  # True if original polygon was taller than wide
     }

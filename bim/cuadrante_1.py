@@ -278,7 +278,7 @@ def cuadrante_1(vertices_terreno, data_dict_ambientes, number_floors=None, verti
     terreno_cq = shapely_a_cadquery(terreno_poly)
     factory_capas.add_in_terreno(workplane=terreno_cq, nivel=1, name="Terreno")
 
-    factory_capas.add_in_terreno(workplane=cuadrante_1_cq, nivel=1, name="Cuadrante")
+    factory_capas.add_cuadrante(workplane=cuadrante_1_cq, name="Cuadrante")
     
     # CUADRANTE
     piso_solido = (

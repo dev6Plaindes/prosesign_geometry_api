@@ -88,182 +88,163 @@
 #     "user_id": 7
 # }
 
+# data_test = {
+#     "name": "ORUEBA",
+#     "tipologia": "Educación",
+#     "zone": "Urbano",
+#     "tipo": "UNIDOCENTE",
+#     "number_floors": "1",
+#     "departamento": "LA LIBERTAD",
+#     "provincia": "TRUJILLO",
+#     "distrito": "EL PORVENIR",
+#     "responsable": "JOSE MANUEL",
+#     "cliente": "EMPRESA SAC",
+#     "width": 62.31046294386033,
+#     "height": 16.323936188593507,
+#     "vertices_rectangle": [
+#         [
+#             299425.36743488855,
+#             8945590.169950876
+#         ],
+#         [
+#             299484.7939796071,
+#             8945608.907068454
+#         ],
+#         [
+#             299479.8852773245,
+#             8945624.475483099
+#         ],
+#         [
+#             299420.4587326059,
+#             8945605.738365522
+#         ]
+#     ],
+#     "angle": 17.5,
+#     "excluded_vertices": [],
+#     "aforo": [
+#         {
+#             "grado": "INICIAL",
+#             "aforo_por_grado": 10,
+#             "cantidad_aulas": 2
+#         },
+#         {
+#             "grado": "PRIMARIA",
+#             "aforo_por_grado": 0,
+#             "cantidad_aulas": 0
+#         },
+#         {
+#             "grado": "SECUNDARIA",
+#             "aforo_por_grado": 0,
+#             "cantidad_aulas": 0
+#         }
+#     ],
+#     "vertices": [
+#         {
+#             "vertice": "V1",
+#             "x": 299489.52,
+#             "y": 8945625.17
+#         },
+#         {
+#             "vertice": "V2",
+#             "x": 299489.49,
+#             "y": 8945610.76
+#         },
+#         {
+#             "vertice": "V3",
+#             "x": 299457.48,
+#             "y": 8945597.96
+#         },
+#         {
+#             "vertice": "V4",
+#             "x": 299455.2,
+#             "y": 8945582.46
+#         },
+#         {
+#             "vertice": "V5",
+#             "x": 299424.9,
+#             "y": 8945589.77
+#         },
+#         {
+#             "vertice": "V6",
+#             "x": 299413.2,
+#             "y": 8945595.47
+#         },
+#         {
+#             "vertice": "V7",
+#             "x": 299426.04,
+#             "y": 8945613.77
+#         },
+#         {
+#             "vertice": "V8",
+#             "x": 299435.99,
+#             "y": 8945623.62
+#         },
+#         {
+#             "vertice": "V9",
+#             "x": 299460.67,
+#             "y": 8945623.23
+#         }
+#     ],
+#     "ambientes": [
+#         {
+#             "ambienteComplementario": "Patio Inicial",
+#             "capacidad": 0
+#         },
+#         {
+#             "ambienteComplementario": "Dirección administrativa",
+#             "capacidad": 0
+#         },
+#         {
+#             "ambienteComplementario": "Sala de Usos Múltiples (SUM)",
+#             "capacidad": 0
+#         }
+#     ],
+#     "user_id": 7
+# }
+
 data_test = {
-    "name": "NUEVO PROYECYO",
+    "name": "PRUEBA",
     "tipologia": "Educación",
     "zone": "Urbano",
     "tipo": "UNIDOCENTE",
     "number_floors": "1",
-    "departamento": "LAMBAYEQUE",
-    "provincia": "FERREÑAFE",
-    "distrito": "CAÑARIS",
-    "responsable": "JOSE JOSE",
-    "cliente": "EMPRES SAC",
-    "width": 43.916196196572855,
-    "height": 49.78106187470257,
+    "departamento": "LA LIBERTAD",
+    "provincia": "ASCOPE",
+    "distrito": "",
+    "responsable": "ASDJ",
+    "cliente": "EMPRESA SAC",
+    "width": 62.31046294386033,
+    "height": 16.323936188593507,
     "vertices_rectangle": [
-        [
-            296280.83649883093,
-            8939939.134825742
-        ],
-        [
-            296309.93625087215,
-            8939972.026112119
-        ],
-        [
-            296272.65243979415,
-            8940005.012041738
-        ],
-        [
-            296243.55268775293,
-            8939972.120755361
-        ]
+        [299425.36743488855, 8945590.169950876],
+        [299484.7939796071, 8945608.907068454],
+        [299479.8852773245, 8945624.475483099],
+        [299420.4587326059, 8945605.738365522],
     ],
-    "angle": 48.5,
+    "angle": 17.5,
     "excluded_vertices": [],
     "aforo": [
-        {
-            "grado": "INICIAL",
-            "aforo_por_grado": 20,
-            "cantidad_aulas": 2
-        },
-        {
-            "grado": "PRIMARIA",
-            "aforo_por_grado": 20,
-            "cantidad_aulas": 6
-        },
-        {
-            "grado": "SECUNDARIA",
-            "aforo_por_grado": 10,
-            "cantidad_aulas": 5
-        }
+        {"grado": "INICIAL", "aforo_por_grado": 0, "cantidad_aulas": 0},
+        {"grado": "PRIMARIA", "aforo_por_grado": 20, "cantidad_aulas": 6},
+        {"grado": "SECUNDARIA", "aforo_por_grado": 0, "cantidad_aulas": 0},
     ],
     "vertices": [
-        {
-            "vertice": "V1",
-            "x": 296287.32,
-            "y": 8939934.03
-        },
-        {
-            "vertice": "V2",
-            "x": 296296.18,
-            "y": 8939947.84
-        },
-        {
-            "vertice": "V3",
-            "x": 296309.97,
-            "y": 8939969.55
-        },
-        {
-            "vertice": "V4",
-            "x": 296309.84,
-            "y": 8939981.56
-        },
-        {
-            "vertice": "V5",
-            "x": 296315.69,
-            "y": 8939993.88
-        },
-        {
-            "vertice": "V6",
-            "x": 296301.56,
-            "y": 8940009.1
-        },
-        {
-            "vertice": "V7",
-            "x": 296293.93,
-            "y": 8940009.74
-        },
-        {
-            "vertice": "V8",
-            "x": 296289.26,
-            "y": 8940009.89
-        },
-        {
-            "vertice": "V9",
-            "x": 296282.3,
-            "y": 8940010.05
-        },
-        {
-            "vertice": "V10",
-            "x": 296282.07,
-            "y": 8940007.58
-        },
-        {
-            "vertice": "V11",
-            "x": 296278.58,
-            "y": 8940004.61
-        },
-        {
-            "vertice": "V12",
-            "x": 296275.87,
-            "y": 8940004.28
-        },
-        {
-            "vertice": "V13",
-            "x": 296270.45,
-            "y": 8940005.52
-        },
-        {
-            "vertice": "V14",
-            "x": 296256.73,
-            "y": 8939999.75
-        },
-        {
-            "vertice": "V15",
-            "x": 296253.88,
-            "y": 8940000.13
-        },
-        {
-            "vertice": "V16",
-            "x": 296250.12,
-            "y": 8939997.66
-        },
-        {
-            "vertice": "V17",
-            "x": 296244.39,
-            "y": 8939991.32
-        },
-        {
-            "vertice": "V18",
-            "x": 296242.64,
-            "y": 8939985.86
-        },
-        {
-            "vertice": "V19",
-            "x": 296243.27,
-            "y": 8939973.23
-        },
-        {
-            "vertice": "V20",
-            "x": 296244.73,
-            "y": 8939967.4
-        },
-        {
-            "vertice": "V21",
-            "x": 296254.3,
-            "y": 8939959.83
-        }
+        {"vertice": "V1", "x": 299489.52, "y": 8945625.17},
+        {"vertice": "V2", "x": 299489.49, "y": 8945610.76},
+        {"vertice": "V3", "x": 299457.48, "y": 8945597.96},
+        {"vertice": "V4", "x": 299455.2, "y": 8945582.46},
+        {"vertice": "V5", "x": 299424.9, "y": 8945589.77},
+        {"vertice": "V6", "x": 299413.2, "y": 8945595.47},
+        {"vertice": "V7", "x": 299426.04, "y": 8945613.77},
+        {"vertice": "V8", "x": 299435.99, "y": 8945623.62},
+        {"vertice": "V9", "x": 299460.67, "y": 8945623.23},
     ],
     "ambientes": [
-        {
-            "ambienteComplementario": "Sala de Usos Múltiples (SUM)",
-            "capacidad": 0
-        },
-        {
-            "ambienteComplementario": "Cocina escolar",
-            "capacidad": 0
-        },
-        {
-            "ambienteComplementario": "Dirección administrativa",
-            "capacidad": 0
-        },
-        {
-            "ambienteComplementario": "Comedor",
-            "capacidad": 0
-        }
+        {"ambienteComplementario": "Dirección administrativa", "capacidad": 0},
+        {"ambienteComplementario": "Sala de Usos Múltiples (SUM)", "capacidad": 0},
+        {"ambienteComplementario": "Patio Inicial", "capacidad": 0},
     ],
-    "user_id": 7
+    "user_id": 7,
 }
 
 ambientes_test = [
@@ -276,7 +257,7 @@ ambientes_test = [
         "Largo": 2.666666667,
         "Tipo": "Fijo",
         "Pabellon": "Derecha",
-        "Piso de preferencia": "1 y 2"
+        "Piso de preferencia": "1 y 2",
     },
     {
         "Ambientes": "Aula de Innovacion Sec",
@@ -287,7 +268,7 @@ ambientes_test = [
         "Largo": 12.0,
         "Tipo": "Fijo",
         "Pabellon": "Derecha",
-        "Piso de preferencia": "1 y 2"
+        "Piso de preferencia": "1 y 2",
     },
     {
         "Ambientes": "Taller creativo Sec",
@@ -298,7 +279,7 @@ ambientes_test = [
         "Largo": 12.0,
         "Tipo": "Fijo",
         "Pabellon": "Derecha",
-        "Piso de preferencia": "1 y 2"
+        "Piso de preferencia": "1 y 2",
     },
     {
         "Ambientes": "Laboratorio",
@@ -309,7 +290,7 @@ ambientes_test = [
         "Largo": 12.0,
         "Tipo": "Fijo",
         "Pabellon": "Derecha",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "Escalera Sec",
@@ -320,7 +301,7 @@ ambientes_test = [
         "Largo": 2.5,
         "Tipo": "Fijo",
         "Pabellon": "Derecha",
-        "Piso de preferencia": "1 y 2"
+        "Piso de preferencia": "1 y 2",
     },
     {
         "Ambientes": "SSHH Sec - Hombres",
@@ -331,7 +312,7 @@ ambientes_test = [
         "Largo": 2.0,
         "Tipo": "Variable",
         "Pabellon": "Derecha",
-        "Piso de preferencia": 0.0
+        "Piso de preferencia": 0.0,
     },
     {
         "Ambientes": "SSHH Sec - Mujeres",
@@ -342,7 +323,7 @@ ambientes_test = [
         "Largo": 2.0,
         "Tipo": "Variable",
         "Pabellon": "Derecha",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "Aulas Primaria",
@@ -353,7 +334,7 @@ ambientes_test = [
         "Largo": 5.333333333,
         "Tipo": "Fijo",
         "Pabellon": "Izquierda",
-        "Piso de preferencia": "1 y 2"
+        "Piso de preferencia": "1 y 2",
     },
     {
         "Ambientes": "Biblioteca",
@@ -364,7 +345,7 @@ ambientes_test = [
         "Largo": 12.5,
         "Tipo": "Fijo",
         "Pabellon": "Izquierda",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "Aula de Innovacion Prim",
@@ -375,7 +356,7 @@ ambientes_test = [
         "Largo": 12.0,
         "Tipo": "Fijo",
         "Pabellon": "Izquierda",
-        "Piso de preferencia": "1 y 2"
+        "Piso de preferencia": "1 y 2",
     },
     {
         "Ambientes": "Taller creativo Prim",
@@ -386,7 +367,7 @@ ambientes_test = [
         "Largo": 12.0,
         "Tipo": "Fijo",
         "Pabellon": "Izquierda",
-        "Piso de preferencia": "1 y 2"
+        "Piso de preferencia": "1 y 2",
     },
     {
         "Ambientes": "Escalera Prim",
@@ -397,7 +378,7 @@ ambientes_test = [
         "Largo": 2.5,
         "Tipo": "Fijo",
         "Pabellon": "Izquierda",
-        "Piso de preferencia": "1 y 2"
+        "Piso de preferencia": "1 y 2",
     },
     {
         "Ambientes": "SSHH Prim - Hombres",
@@ -408,7 +389,7 @@ ambientes_test = [
         "Largo": 2.0,
         "Tipo": "Variable",
         "Pabellon": "Izquierda",
-        "Piso de preferencia": 0.0
+        "Piso de preferencia": 0.0,
     },
     {
         "Ambientes": "SSHH Prim - Mujeres",
@@ -419,7 +400,7 @@ ambientes_test = [
         "Largo": 2.0,
         "Tipo": "Variable",
         "Pabellon": "Izquierda",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "Aulas Ciclo I",
@@ -430,7 +411,7 @@ ambientes_test = [
         "Largo": 7.5,
         "Tipo": "Fijo",
         "Pabellon": "Inferior",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "Aulas Ciclo II",
@@ -441,7 +422,7 @@ ambientes_test = [
         "Largo": 7.5,
         "Tipo": "Fijo",
         "Pabellon": "Inferior",
-        "Piso de preferencia": "1 y 2"
+        "Piso de preferencia": "1 y 2",
     },
     {
         "Ambientes": "Sala de Psicomotricidad",
@@ -452,7 +433,7 @@ ambientes_test = [
         "Largo": 7.5,
         "Tipo": "Fijo",
         "Pabellon": "Inferior",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "Topico",
@@ -463,7 +444,7 @@ ambientes_test = [
         "Largo": 7.5,
         "Tipo": "Fijo",
         "Pabellon": "Inferior",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "Lactario",
@@ -474,7 +455,7 @@ ambientes_test = [
         "Largo": 7.5,
         "Tipo": "Fijo",
         "Pabellon": "Inferior",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "SSHH Inicial - Hombres",
@@ -485,7 +466,7 @@ ambientes_test = [
         "Largo": 7.5,
         "Tipo": "Variable",
         "Pabellon": "Inferior",
-        "Piso de preferencia": 0.0
+        "Piso de preferencia": 0.0,
     },
     {
         "Ambientes": "SSHH Inicial - Mujeres",
@@ -496,7 +477,7 @@ ambientes_test = [
         "Largo": 7.5,
         "Tipo": "Variable",
         "Pabellon": "Inferior",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "Cocina Inicial",
@@ -507,7 +488,7 @@ ambientes_test = [
         "Largo": 7.5,
         "Tipo": "Variable",
         "Pabellon": "Inferior",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "Direccion Adm.",
@@ -518,7 +499,7 @@ ambientes_test = [
         "Largo": 5.0,
         "Tipo": "Variable",
         "Pabellon": "Superior",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "Área de espera",
@@ -529,7 +510,7 @@ ambientes_test = [
         "Largo": 5.0,
         "Tipo": "Variable",
         "Pabellon": "Superior",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "Sala de Reuniones",
@@ -540,7 +521,7 @@ ambientes_test = [
         "Largo": 5.0,
         "Tipo": "Variable",
         "Pabellon": "Superior",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "Area de ingreso",
@@ -551,7 +532,7 @@ ambientes_test = [
         "Largo": 5.0,
         "Tipo": "Fijo",
         "Pabellon": "Superior",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "Sala de Profesores",
@@ -562,7 +543,7 @@ ambientes_test = [
         "Largo": 5.0,
         "Tipo": "Variable",
         "Pabellon": "Superior",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "SSHH Adm. - Hombres",
@@ -573,7 +554,7 @@ ambientes_test = [
         "Largo": 5.0,
         "Tipo": "Variable",
         "Pabellon": "Superior",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "SSHH Adm. - Mujeres",
@@ -584,7 +565,7 @@ ambientes_test = [
         "Largo": 5.0,
         "Tipo": "Variable",
         "Pabellon": "Superior",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "Losa Deportiva",
@@ -595,7 +576,7 @@ ambientes_test = [
         "Largo": 28.0,
         "Tipo": "Fijo",
         "Pabellon": "Medio",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "Taller EPT",
@@ -606,7 +587,7 @@ ambientes_test = [
         "Largo": 12.0,
         "Tipo": "Fijo",
         "Pabellon": "Medio",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "SUM",
@@ -617,7 +598,7 @@ ambientes_test = [
         "Largo": 10.8,
         "Tipo": "Fijo",
         "Pabellon": "Medio",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "Cocina Prim - Sec",
@@ -628,7 +609,7 @@ ambientes_test = [
         "Largo": 4.9,
         "Tipo": "Variable",
         "Pabellon": "Medio",
-        "Piso de preferencia": 1.0
+        "Piso de preferencia": 1.0,
     },
     {
         "Ambientes": "Patio Inicial",
@@ -639,6 +620,6 @@ ambientes_test = [
         "Largo": 20.0,
         "Tipo": "Variable",
         "Pabellon": "Medio",
-        "Piso de preferencia": 1.0
-    }
+        "Piso de preferencia": 1.0,
+    },
 ]

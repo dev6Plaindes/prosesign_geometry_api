@@ -3,6 +3,9 @@ import os
 import io
 import logging
 
+from bim.pabellones_to_csv import exportar_pabellones_a_csv
+from bim.utils import view_ancho_largo_polygon
+from bim.utils.view_ancho_largo_polygon import imprimir_dimensiones_poligono
 from dev.assemblys.capas import FactoryCapas
 from dev.assemblys.cuadrante import build_cuadrante_shapely
 from dev.assemblys.terreno_assembly import terreno_assembly
@@ -14,11 +17,20 @@ from dev.config import CONFIG_PROYECTO
 from dev.data.transform import agrupar_ambientes_por_pabellon
 from dev.normalize import normalizar_datos_terreno
 from dev.types import DataAmbientes
-from dev.utils.calculate_medidas import largos_for_piso_and_ambiente, limpiar_distribucion_para_resumen, obtener_polygon_real_del_piso
+from dev.utils.calculate_medidas import (
+    largos_for_piso_and_ambiente,
+    limpiar_distribucion_para_resumen,
+    obtener_polygon_real_del_piso,
+)
 from dev.utils.largo_ancho_cuadrante import obtener_dimensiones_cuadrante
 from bim.upload_aws_file import subir_archivo_a_s3, obtener_archivo_en_binario
 from bim.creations.escaleras import crear_poligono_escalera
-from dev.utils.tools import div_logic, div_logic_with_spacing, obtener_sub_polygon_centrado
+from dev.utils.tools import (
+    div_logic,
+    div_logic_with_spacing,
+    obtener_sub_polygon_centrado,
+)
+
 
 # Generacion del cuadrante 1 en el plano Version 2
 # Con shapely para exactitud y poligonos en todos los angulos posibles
@@ -29,19 +41,17 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
 
     # Refactorizar
     factory_capas = FactoryCapas(
-            ensamblaje=ensamblaje_niveles,
-        )
+        ensamblaje=ensamblaje_niveles,
+    )
 
     # 2. Obtenemos tus vértices UTM de prueba en bruto (UTM masivos)
     cuadrante_maximo = vertices_cuadrante
     terreno_real = vertices_terreno
 
-
     # 3. Normalizar los datos al origen común (0, 0) de forma centralizada
     # 'origen_utm' contiene el punto (min_x, min_y) real de la parcela en la Tierra
     cuadrante_norm, terreno_norm, origen_utm = normalizar_datos_terreno(
-        cuadrante_maximo, 
-        terreno_real
+        cuadrante_maximo, terreno_real
     )
 
     print(f"Punto Cero Georreferenciado (UTM): {origen_utm}")
@@ -49,75 +59,195 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
     # 4. Procesamos y agregamos el cuadrante de referencia al assembly
     # Nota: Pasamos la data normalizada. El offset devuelto localmente será (0, 0)
     cuadrante_shapely = build_cuadrante_shapely(
-        vertices=cuadrante_norm, 
-        assembly=mi_modelo, 
+        vertices=cuadrante_norm,
+        assembly=mi_modelo,
         nombre="Límite del Cuadrante",
-        color_hex="#CDCDCD" # Rojo para notar el límite
+        color_hex="#CDCDCD",  # Rojo para notar el límite
     )
 
+    # factory_capas.add_terreno(cuadrante_shapely, name="Cuadrante")
+
     # 5. Agregamos el Terreno Real usando la data ya normalizada
-    _, terreno_wokrplane =terreno_assembly(
+    _, terreno_wokrplane = terreno_assembly(
         vertices_dict=terreno_norm,
         assembly=mi_modelo,
         nombre="Terreno Real (Polígono)",
-        color_hex="#2ECC71" # Verde para el terreno real
+        color_hex="#2ECC71",  # Verde para el terreno real
     )
 
     factory_capas.add_terreno(terreno_wokrplane, name="Terreno_Base")
 
-
     largo_cuadrante, ancho_cuadrante = obtener_dimensiones_cuadrante(cuadrante_norm)
-    print(f"📐 Dimensiones del Cuadrante: Largo (X) = {largo_cuadrante:.3f} m | Ancho (Y) = {ancho_cuadrante:.3f} m")
+    print(
+        f"📐 Dimensiones del Cuadrante: Largo (X) = {largo_cuadrante:.3f} m | Ancho (Y) = {ancho_cuadrante:.3f} m"
+    )
     CONFIG_PROYECTO["ancho_cuadrante"] = ancho_cuadrante
     CONFIG_PROYECTO["largo_cuadrante"] = largo_cuadrante
-    
+
     # =========================================================================
-    # ADAPTACIÓN DINÁMICA A LA ORIENTACIÓN DEL CUADRANTE
+    # 1. IDENTIFICACIÓN PREVIA DE PABELLONES ACTIVOS
+    # =========================================================================
+    pabellones = agrupar_ambientes_por_pabellon(ambientes)
+    exportar_pabellones_a_csv(pabellones)
+
+    data_pab_medio: list[DataAmbientes] = pabellones.get("medio", [])
+    data_primaria: list[DataAmbientes] = pabellones.get("primaria", [])
+    data_secundaria: list[DataAmbientes] = pabellones.get("secundaria", [])
+    data_inicial: list[DataAmbientes] = pabellones.get("inicial", [])
+    data_admin: list[DataAmbientes] = pabellones.get("admin", [])
+
+    pabellones_activos = {}
+    if data_primaria:
+        pabellones_activos["primaria"] = data_primaria
+    if data_secundaria:
+        pabellones_activos["secundaria"] = data_secundaria
+    if data_inicial:
+        pabellones_activos["inicial"] = data_inicial
+    if data_admin:
+        pabellones_activos["admin"] = data_admin
+
+    num_pabellones = len(pabellones_activos)
+    print(
+        f"Pabellones activos detectados ({num_pabellones}): {list(pabellones_activos.keys())}"
+    )
+
+    # =========================================================================
+    # 2. ADAPTACIÓN DINÁMICA DE LA ORIENTACIÓN
     # =========================================================================
     if largo_cuadrante >= ancho_cuadrante:
-        eje_principal = "x"  # El lado más largo es el eje X
+        eje_principal = "x"
         eje_secundario = "y"
     else:
-        eje_principal = "y"  # El lado más largo es el eje Y
+        eje_principal = "y"
         eje_secundario = "x"
-    print(f"Orientación detectada: Eje Principal = '{eje_principal}', Eje Secundario = '{eje_secundario}'")
 
-    ancho_pasadiso=CONFIG_PROYECTO["ancho_pasadiso"]
-    ancho_aula=CONFIG_PROYECTO["ancho_aula"]
+    ancho_pasadiso = CONFIG_PROYECTO["ancho_pasadiso"]
+    ancho_aula = CONFIG_PROYECTO["ancho_aula"]
 
-    medidas = [ancho_aula, ancho_pasadiso, "auto", ancho_pasadiso, ancho_aula]
+    slots = {}
+    space_centro_2 = None
 
-    # Se divide a lo largo del eje principal (el más largo)
-    tramos_poligonos = div_logic(medidas, cuadrante_shapely, eje_div=eje_principal)
-    primaria, pasadizo_primaria, space_centro_1, pasadizo_secundaria, secundaria =tramos_poligonos
+    # =========================================================================
+    # 3. DIVISIÓN DINÁMICA SEGÚN NÚMERO DE PABELLONES (CON PASADIZOS)
+    # =========================================================================
+    if num_pabellones <= 2:
+        print(
+            "📐 Aplicando división dinámica para 2 pabellones (Aulas + Pasadizos laterales + Centro)."
+        )
 
-    # La subdivisión del centro también sigue el eje principal
-    tramos_poligonos_2 = div_logic(medidas, space_centro_1, eje_div=eje_principal)
-    admin, pasadizo_admin, space_centro_2, pasadizo_inicial, inicial =tramos_poligonos_2
+        # 5 tramos a lo largo del eje principal: [Aula, Pasadizo, Centro, Pasadizo, Aula]
+        medidas_2_pabellones = [
+            ancho_aula,
+            ancho_pasadiso,
+            "auto",
+            ancho_pasadiso,
+            ancho_aula,
+        ]
 
-    # Agrupas todo en una sola llamada
-    pabellones = agrupar_ambientes_por_pabellon(ambientes)
+        tramos_3 = div_logic(
+            medidas_2_pabellones, cuadrante_shapely, eje_div=eje_principal
+        )
 
-    # Extraes las variables que necesitas con nombres limpios y consistentes
-    data_pab_medio: list[DataAmbientes] = pabellones["medio"]
-    data_primaria: list[DataAmbientes] = pabellones["primaria"]
-    data_secundaria: list[DataAmbientes] = pabellones["secundaria"]
-    data_inicial: list[DataAmbientes] = pabellones["inicial"]
-    data_admin: list[DataAmbientes] = pabellones["admin"]
+        slot_lat_1, pasadizo_lat_1, space_centro_2, pasadizo_lat_2, slot_lat_2 = tramos_3
+
+        slots = {
+            "lateral_1": {"polygon": slot_lat_1, "pasadizo": pasadizo_lat_1},
+            "lateral_2": {"polygon": slot_lat_2, "pasadizo": pasadizo_lat_2},
+            "extremo_1": {"polygon": None, "pasadizo": None},
+            "extremo_2": {"polygon": None, "pasadizo": None},
+        }
+        imprimir_dimensiones_poligono(space_centro_2, "AREA MEDIO")
+
+    else:
+        print("📐 Aplicando división estándar en cruz para 3 o más pabellones.")
+        medidas_5_tramos = [
+            ancho_aula, ancho_pasadiso, "auto", ancho_pasadiso, ancho_aula
+        ]
+
+        # División en eje principal (Lados)
+        tramos_poligonos = div_logic(
+            medidas_5_tramos, cuadrante_shapely, eje_div=eje_principal
+        )
+        primaria, pasadizo_primaria, space_centro_1, pasadizo_secundaria, secundaria = (
+            tramos_poligonos
+        )
+
+        # División en eje secundario (Extremos)
+        tramos_poligonos_2 = div_logic(
+            medidas_5_tramos, space_centro_1, eje_div=eje_secundario
+        )
+
+        if len(tramos_poligonos_2) == 5:
+            admin, pasadizo_admin, space_centro_2, pasadizo_inicial, inicial = (
+                tramos_poligonos_2
+            )
+        else:
+            admin, pasadizo_admin, space_centro_2, pasadizo_inicial, inicial = (
+                None, None, space_centro_1, None, None
+            )
+
+        slots = {
+            "lateral_1": {"polygon": primaria, "pasadizo": pasadizo_primaria},
+            "lateral_2": {"polygon": secundaria, "pasadizo": pasadizo_secundaria},
+            "extremo_1": {"polygon": admin, "pasadizo": pasadizo_admin},
+            "extremo_2": {"polygon": inicial, "pasadizo": pasadizo_inicial},
+        }
+
+    # =========================================================================
+    # 4. ASIGNACIÓN FINAL DE PABELLONES A SLOTS
+    # =========================================================================
+    asignacion_final = {}
+    nombres_activos = list(pabellones_activos.keys())
+
+    if num_pabellones <= 2:
+        # Asignar únicamente a los slots laterales que abarcan todo el largo/alto
+        if num_pabellones >= 1:
+            asignacion_final[nombres_activos[0]] = {
+                "data": pabellones_activos[nombres_activos[0]],
+                "slot": slots["lateral_1"],
+            }
+        if num_pabellones == 2:
+            asignacion_final[nombres_activos[1]] = {
+                "data": pabellones_activos[nombres_activos[1]],
+                "slot": slots["lateral_2"],
+            }
+    else:
+        # Distribución estándar de 4 pabellones
+        if "primaria" in pabellones_activos:
+            asignacion_final["primaria"] = {
+                "data": data_primaria,
+                "slot": slots["lateral_1"],
+            }
+        if "secundaria" in pabellones_activos:
+            asignacion_final["secundaria"] = {
+                "data": data_secundaria,
+                "slot": slots["lateral_2"],
+            }
+        if "inicial" in pabellones_activos:
+            asignacion_final["inicial"] = {
+                "data": data_inicial,
+                "slot": slots["extremo_2"],
+            }
+        if "admin" in pabellones_activos:
+            asignacion_final["admin"] = {"data": data_admin, "slot": slots["extremo_1"]}
+
+    print("CENTRO AMBIENTES", data_pab_medio)
 
     # Lógica para determinar la orientación de la puerta hacia el centro
     centro_absoluto = space_centro_2.centroid
 
-    def determinar_posicion_puerta(pabellon_polygon, centro_layout, nombre_pabellon, eje_principal_division):
+    def determinar_posicion_puerta(
+        pabellon_polygon, centro_layout, nombre_pabellon, eje_principal_division
+    ):
         """
         Determina si la puerta debe estar en el lado 'top' o 'bottom' para que mire hacia el patio central.
-        La lógica asume que los pabellones son más largos que anchos (verticales) y que la función 
+        La lógica asume que los pabellones son más largos que anchos (verticales) y que la función
         create_structure los rotará 90 grados para trabajar. En esa rotación, el lado derecho (+X)
         se convierte en el lado superior (+Y, 'top'), y el izquierdo (-X) en el inferior (-Y, 'bottom').
         """
         centro_pabellon = pabellon_polygon.centroid
 
-        if eje_principal_division == 'x':
+        if eje_principal_division == "x":
             # Pabellones a izquierda/derecha del centro.
             # Si el pabellón está a la izquierda del centro, su puerta debe estar en su lado derecho.
             # Lado derecho (+X) se convierte en 'top'.
@@ -127,7 +257,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
             # Lado izquierdo (-X) se convierte en 'bottom'.
             else:
                 return "bottom"
-        else: # 'y'
+        else:  # 'y'
             # Pabellones arriba/abajo del centro.
             # Si el pabellón está abajo del centro, su puerta debe estar en su lado superior.
             # Lado superior (+Y) se convierte en 'top'.
@@ -138,280 +268,244 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
             else:
                 return "bottom"
 
-    pos_puerta_primaria = determinar_posicion_puerta(primaria, centro_absoluto, "primaria", eje_principal)
-    pos_puerta_secundaria = determinar_posicion_puerta(secundaria, centro_absoluto, "secundaria", eje_principal)
-    pos_puerta_inicial = determinar_posicion_puerta(inicial, centro_absoluto, "inicial", eje_principal)
-    pos_puerta_admin = determinar_posicion_puerta(admin, centro_absoluto, "admin", eje_principal)
+    # =========================================================================
+    # CONSTRUCCIÓN DE PABELLONES BASADA EN ASIGNACIÓN DINÁMICA
+    # =========================================================================
+    distribuciones_finales = {
+        "primaria": [],
+        "secundaria": [],
+        "inicial": [],
+        "admin": [],
+    }
 
-    # PRIMARIA
-    distribucion_primaria = []
-    if data_primaria:
-        distribucion_primaria = largos_for_piso_and_ambiente(
-            data=data_primaria,
-            polygon=primaria,
-            name_pabellon="Primaria"
+    for nombre_pabellon, info in asignacion_final.items():
+        logging.info(f"Construyendo pabellón '{nombre_pabellon}'...")
+
+        data_pabellon = info["data"]
+        slot_polygon = info["slot"]["polygon"]
+        pasadizo_polygon = info["slot"]["pasadizo"]
+
+        if not slot_polygon:
+            logging.warning(
+                f"Omitiendo construcción del pabellón '{nombre_pabellon}' porque no tiene un slot geométrico válido."
+            )
+            continue
+
+        pos_puerta = determinar_posicion_puerta(
+            slot_polygon, centro_absoluto, nombre_pabellon, eje_secundario
         )
+
+        distribucion = largos_for_piso_and_ambiente(
+            data=data_pabellon,
+            polygon=slot_polygon,
+            name_pabellon=nombre_pabellon.capitalize(),
+        )
+
+        distribuciones_finales[nombre_pabellon] = distribucion
+
+        if not distribucion:
+            logging.warning(
+                f"No se pudo generar la distribución para el pabellón '{nombre_pabellon}'. Omitiendo construcción."
+            )
+            continue
+        print("DISTRUBUICION", distribucion[0])
+        container_polygon = obtener_polygon_real_del_piso(distribucion[0], slot_polygon)
+        max_nivel = len(distribucion)
+
+        lado_escalera = "derecha" if nombre_pabellon == "primaria" else "izquierda"
+        posicion_vertical_escalera = "bottom" if nombre_pabellon == "admin" else "top"
+        poly_escalera = crear_poligono_escalera(
+            principal_polygon=slot_polygon,
+            container_polygon=container_polygon,
+            lado=lado_escalera,
+            posicion_vertical=posicion_vertical_escalera,
+        )
+
+        if pasadizo_polygon:
+            new_block(
+                polygon=pasadizo_polygon,
+                alto_z=0.3,
+                assembly=mi_modelo,
+                nombre=f"Pasadizo {nombre_pabellon.capitalize()} - Nivel 1",
+                color_hex="#D8D8D8",
+                factory_capas=factory_capas,
+            )
+
+        # REvisando medidas
+        print("PISOS DISTRIBUICION", distribucion)
     
-    if distribucion_primaria:
-        container_primaria = obtener_polygon_real_del_piso(distribucion_primaria[0], primaria)
-        max_nivel_primaria = len(distribucion_primaria)
-        poly_escalera_primaria = crear_poligono_escalera(primaria, container_primaria)
-
-        new_block(
-            polygon=pasadizo_primaria,
-            alto_z=0.3,
-            assembly=mi_modelo,
-            nombre="Pasadizo Primaria - Nivel 1",
-            color_hex="#D8D8D8",
-            factory_capas=factory_capas
-        )
-
-        for index, piso_data in enumerate(distribucion_primaria):
+        for index, piso_data in enumerate(distribucion):
             nivel_actual = index + 1
             nombres_ambientes_piso = [item["ambiente"] for item in piso_data]
             largos_habitaciones_piso = [item["largo"] for item in piso_data]
-            
+            anchos_habitaciones_piso = [item["ancho"] for item in piso_data]
+            imprimir_dimensiones_poligono(
+                container_polygon, f"PISO MEDIDA {nivel_actual}"
+            )
+
             create_structure(
                 ensamblaje=mi_modelo,
-                polygon=container_primaria,                       # El Polygon de Shapely del tramo
-                poly_escalera=poly_escalera_primaria,
+                polygon_pabellon=slot_polygon,
+                polygon=container_polygon,
+                poly_escalera=poly_escalera,
                 largos_habitaciones=largos_habitaciones_piso,
-                sufijo_nombre="Primaria",
-                posicion_puerta=pos_puerta_primaria,                  # Orientación de la puerta (top/bottom)
+                anchos_habitaciones=anchos_habitaciones_piso,
+                sufijo_nombre=nombre_pabellon.capitalize(),
+                posicion_puerta=pos_puerta,
                 nivel=nivel_actual,
-                max_nivel=max_nivel_primaria,
+                max_nivel=max_nivel,
                 names_ambientes=nombres_ambientes_piso,
-                factory_capas=factory_capas
+                factory_capas=factory_capas,
             )
 
             create_balcony(
                 ensamblaje=mi_modelo,
-                polygon=container_primaria,
-                sufijo_nombre="Primaria",
-                posicion_puerta=pos_puerta_primaria,
+                polygon=container_polygon,
+                polygon_pabellon=slot_polygon,
+                sufijo_nombre=nombre_pabellon.capitalize(),
+                posicion_puerta=pos_puerta,
                 nivel=nivel_actual,
                 ancho_balcon=1.8,
-                factory_capas=factory_capas
-            )
-    else:
-        logging.warning("No se encontraron datos de ambientes para Primaria o no se pudo generar la distribución. Omitiendo pabellón de Primaria.")
-
-    # SECUNDARIA
-    distribucion_sec = []
-    if data_secundaria:
-        distribucion_sec = largos_for_piso_and_ambiente(
-            data=data_secundaria,
-            polygon=secundaria,
-            name_pabellon="Secundaria"
-        )
-    
-    if distribucion_sec:
-        container_secundaria = obtener_polygon_real_del_piso(distribucion_sec[0], secundaria)
-        max_nivel_secundaria = len(distribucion_sec)
-        poly_escalera_sec = crear_poligono_escalera(secundaria, container_secundaria, lado="izquierda")
-
-        new_block(
-            polygon=pasadizo_secundaria,
-            alto_z=0.3,
-            assembly=mi_modelo,
-            nombre="Pasadizo Secundaria Nivel 1",
-            color_hex="#D8D8D8",
-            factory_capas=factory_capas
-        )
-
-        for index, piso_data in enumerate(distribucion_sec):
-            nivel_actual = index + 1
-            nombres_ambientes_piso = [item["ambiente"] for item in piso_data]
-            largos_habitaciones_piso = [item["largo"] for item in piso_data]
-            
-            create_structure(
-                ensamblaje=mi_modelo,
-                polygon=container_secundaria,                       # El Polygon de Shapely del tramo
-                poly_escalera=poly_escalera_sec,
-                largos_habitaciones=largos_habitaciones_piso,
-                sufijo_nombre="Secundaria",
-                posicion_puerta=pos_puerta_secundaria,                  # Orientación de la puerta (top/bottom)
-                nivel=nivel_actual,
-                max_nivel=max_nivel_secundaria,
-                names_ambientes=nombres_ambientes_piso,
-                factory_capas=factory_capas
+                factory_capas=factory_capas,
             )
 
-            create_balcony(
-                ensamblaje=mi_modelo,
-                polygon=container_secundaria,
-                sufijo_nombre="Secundaria",
-                posicion_puerta=pos_puerta_secundaria,
-                nivel=nivel_actual,
-                ancho_balcon=1.8,
-                factory_capas=factory_capas
-            )
-    else:
-        logging.warning("No se encontraron datos de ambientes para Secundaria o no se pudo generar la distribución. Omitiendo pabellón de Secundaria.")
+    # =========================================================================
+    # CENTRO: Ubicación Progresiva / Fallback por Prioridad
+    # =========================================================================
 
-    # INICIAL
-    distribucion_inicial = []
-    if data_inicial:
-        distribucion_inicial = largos_for_piso_and_ambiente(
-            data=data_inicial,
-            polygon=inicial,
-            name_pabellon="Inicial"
-        )
-    
-    if distribucion_inicial:
-        container_inicial = obtener_polygon_real_del_piso(distribucion_inicial[0], inicial)
-        max_nivel_inicial = len(distribucion_inicial)
-        poly_escalera_inicial = crear_poligono_escalera(inicial, container_inicial, lado="izquierda")
-
-        for index, piso_data in enumerate(distribucion_inicial):
-            nivel_actual = index + 1
-            nombres_ambientes_piso = [item["ambiente"] for item in piso_data]
-            largos_habitaciones_piso = [item["largo"] for item in piso_data]
-            
-            create_structure(
-                ensamblaje=mi_modelo,
-                polygon=container_inicial,                       # El Polygon de Shapely del tramo
-                poly_escalera=poly_escalera_inicial,
-                largos_habitaciones=largos_habitaciones_piso,
-                sufijo_nombre="Inicial",
-                posicion_puerta=pos_puerta_inicial,             # Orientación de la puerta (top/bottom)
-                nivel=nivel_actual,
-                max_nivel=max_nivel_inicial,
-                names_ambientes=nombres_ambientes_piso,
-                factory_capas=factory_capas
-            )
-
-            create_balcony(
-                ensamblaje=mi_modelo,
-                polygon=container_inicial,
-                sufijo_nombre="Inicial",
-                posicion_puerta=pos_puerta_inicial,
-                nivel=nivel_actual,
-                ancho_balcon=1.8,
-                factory_capas=factory_capas
-            )
-    else:
-        logging.warning("No se encontraron datos de ambientes para Inicial o no se pudo generar la distribución. Omitiendo pabellón de Inicial.")
-        
-        
-    # ADMIN
-    distribucion_admin = []
-    if data_admin:
-        distribucion_admin = largos_for_piso_and_ambiente(
-            data=data_admin,
-            polygon=admin,
-            name_pabellon="Admin"
-        )
-    if distribucion_admin:
-        container_admin = obtener_polygon_real_del_piso(distribucion_admin[0], admin)
-        max_nivel_admin = len(distribucion_admin)
-        poly_escalera_admin = crear_poligono_escalera(admin, container_admin, lado="izquierda", posicion_vertical="bottom")
-
-        for index, piso_data in enumerate(distribucion_admin):
-            nivel_actual = index + 1
-            nombres_ambientes_piso = [item["ambiente"] for item in piso_data]
-            largos_habitaciones_piso = [item["largo"] for item in piso_data]
-            
-            create_structure(
-                ensamblaje=mi_modelo,
-                polygon=container_admin,                       # El Polygon de Shapely del tramo
-                poly_escalera=poly_escalera_admin,
-                largos_habitaciones=largos_habitaciones_piso,
-                sufijo_nombre="Admin",
-                posicion_puerta=pos_puerta_admin,             # Orientación de la puerta (top/bottom)
-                nivel=nivel_actual,
-                max_nivel=max_nivel_admin,
-                names_ambientes=nombres_ambientes_piso,
-                factory_capas=factory_capas
-            )
-
-            create_balcony(
-                ensamblaje=mi_modelo,
-                polygon=container_admin,
-                sufijo_nombre="Admin",
-                posicion_puerta=pos_puerta_admin,
-                nivel=nivel_actual,
-                ancho_balcon=1.8,
-                factory_capas=factory_capas
-            )
-    else:
-        logging.warning("No se encontraron datos de ambientes para Admin o no se pudo generar la distribución. Omitiendo pabellón de Admin.")
-            
-    if distribucion_inicial:
-        new_block(
-            polygon=pasadizo_inicial,
-            alto_z=0.3,
-            assembly=mi_modelo,
-            nombre="Pasadizo Inicial Nivel 1",
-            color_hex="#D8D8D8",         # Azul
-            factory_capas=factory_capas
-        )
-
-    if distribucion_admin:
-        new_block(
-            polygon=pasadizo_admin,
-            alto_z=0.3,
-            assembly=mi_modelo,
-            nombre="Pasadizo Admin Nivel 1",
-            color_hex="#D8D8D8",         # Azul
-            factory_capas=factory_capas
-        )
-
-    # CENTRO
-
-    # Patio inicial y losa Deportiva y SUM
     # 1. Búsqueda de ambientes
-    patio_inicial_list = [row for row in data_pab_medio if "Patio Inicial" in row["Ambientes"]]
-    patio_losa_dep_list = [row for row in data_pab_medio if "Losa Deportiva" in row["Ambientes"]]
-    sum_salon_usos_mult_list = [row for row in data_pab_medio if "SUM" in row["Ambientes"]]
+    patio_inicial_list = [
+        row for row in data_pab_medio
+        if "PATIOINICIAL" in row.get("Ambientes", "").upper().replace(" ", "")
+    ]
+    patio_losa_dep_list = [
+        row for row in data_pab_medio
+        if "LOSADEPORTIVA" in row.get("Ambientes", "").upper().replace(" ", "")
+    ]
+    sum_salon_usos_mult_list = [
+        row for row in data_pab_medio
+        if "SUM" in row.get("Ambientes", "").upper().replace(" ", "")
+    ]
 
-    # Variables de salida inicializadas por defecto
-    patio_inicial = None
-    losa_deportiva = None
     patio_inicial_values = patio_inicial_list[0] if patio_inicial_list else None
     patio_losa_dep_values = patio_losa_dep_list[0] if patio_losa_dep_list else None
     sum_salon_usos_mult_val = sum_salon_usos_mult_list[0] if sum_salon_usos_mult_list else None
 
-    # 2. Configuración condicional de dimensiones
-    ancho_patio = 0
-    largo_patio = 0
-    if patio_inicial_values:
-        name_ambiente, m2, cantidad, _, ancho_patio, largo_patio, *rest = patio_inicial_values.values()
+    # Polígonos resultantes finales
+    patio_inicial = None
+    losa_deportiva = None
+    sum_ambiente = None
 
-    ancho_losa = patio_losa_dep_values["Ancho"] if patio_losa_dep_values else "auto"
-    largo_losa = patio_losa_dep_values["Largo"] if patio_losa_dep_values else "auto"
-    ancho_sum = sum_salon_usos_mult_val["Ancho"] if sum_salon_usos_mult_val else "auto"
+    # Espacio disponible en el contenedor central
+    space_patio, centro_3, space_sum = None, None, None
 
-    # 3. Lógica de espaciado central
-    medidas_centro = [
-        ancho_patio if patio_inicial_values else "auto", 
-        ancho_losa, 
-        ancho_sum
-    ]
-    tramos_centro = div_logic_with_spacing(medidas_centro, space_centro_2, eje_div=eje_secundario)
-    space_patio, centro_3, space_sum = tramos_centro if len(tramos_centro) == 3 else (None, None, None)
+    if space_centro_2:
+        # Preparamos dimensiones
+        ancho_patio = patio_inicial_values.get("Ancho", 0) if patio_inicial_values else 0
+        largo_patio = patio_inicial_values.get("Largo", 0) if patio_inicial_values else 0
 
-    # 4. Creación condicional de geometrías (Solo si existen)
-    if patio_inicial_values and space_patio:
-        tramos_patio = div_logic(["auto", largo_patio, "auto"], space_patio, eje_div=eje_secundario)
-        if len(tramos_patio) == 3:
-            _, patio_inicial, _ = tramos_patio
+        ancho_losa = patio_losa_dep_values["Ancho"] if patio_losa_dep_values else "auto"
+        largo_losa = patio_losa_dep_values.get("Largo", 0) if patio_losa_dep_values else 0
 
-    if patio_losa_dep_values and centro_3:
-        tramos_losa = div_logic(["auto", largo_losa, "auto"], centro_3, eje_div=eje_secundario)
-        if len(tramos_losa) == 3:
-            _, losa_deportiva, _ = tramos_losa
-    # Salon de usos multiples
-    sum_ambiente = obtener_sub_polygon_centrado(space_sum, sum_salon_usos_mult_val["Largo"], sum_salon_usos_mult_val["Ancho"]) if sum_salon_usos_mult_val and space_sum else None
+        ancho_sum = sum_salon_usos_mult_val["Ancho"] if sum_salon_usos_mult_val else "auto"
+        largo_sum = sum_salon_usos_mult_val.get("Largo", 0) if sum_salon_usos_mult_val else 0
 
+        # INTENTO 1: División conjunta de los 3 tramos
+        medidas_centro = [
+            ancho_patio if patio_inicial_values else "auto",
+            ancho_losa,
+            ancho_sum,
+        ]
+        tramos_centro = div_logic_with_spacing(
+            medidas_centro, space_centro_2, eje_div=eje_secundario
+        )
+
+        if len(tramos_centro) == 3:
+            space_patio, centro_3, space_sum = tramos_centro
+        else:
+            logging.warning(
+                "⚠️ No caben todos los ambientes del centro simultáneamente. "
+                "Iniciando ubicación incremental por prioridad..."
+            )
+            # INTENTO 2: Ubicación incremental uno a uno
+            # Probar cada ambiente individualmente en el espacio restante de acuerdo a la lista
+            espacio_disponible_actual = space_centro_2
+
+            for amb in data_pab_medio:
+                nombre_amb = amb.get("Ambientes", "").upper().replace(" ", "")
+
+                if "PATIOINICIAL" in nombre_amb and patio_inicial_values and not space_patio:
+                    # Validar límites
+                    bounds = espacio_disponible_actual.bounds
+                    w_disp, h_disp = bounds[2] - bounds[0], bounds[3] - bounds[1]
+                    
+                    if (ancho_patio <= w_disp and largo_patio <= h_disp) or (largo_patio <= w_disp and ancho_patio <= h_disp):
+                        tramos = div_logic([ancho_patio, "auto"], espacio_disponible_actual, eje_div=eje_secundario)
+                        if len(tramos) >= 1:
+                            space_patio = tramos[0]
+                            espacio_disponible_actual = tramos[-1] if len(tramos) > 1 else espacio_disponible_actual
+
+                elif "LOSADEPORTIVA" in nombre_amb and patio_losa_dep_values and not centro_3:
+                    if isinstance(ancho_losa, (int, float)):
+                        tramos = div_logic([ancho_losa, "auto"], espacio_disponible_actual, eje_div=eje_secundario)
+                        if len(tramos) >= 1:
+                            centro_3 = tramos[0]
+                            espacio_disponible_actual = tramos[-1] if len(tramos) > 1 else espacio_disponible_actual
+                    else:
+                        centro_3 = espacio_disponible_actual
+
+                elif "SUM" in nombre_amb and sum_salon_usos_mult_val and not space_sum:
+                    if isinstance(ancho_sum, (int, float)):
+                        tramos = div_logic([ancho_sum, "auto"], espacio_disponible_actual, eje_div=eje_secundario)
+                        if len(tramos) >= 1:
+                            space_sum = tramos[0]
+                            espacio_disponible_actual = tramos[-1] if len(tramos) > 1 else espacio_disponible_actual
+                    else:
+                        space_sum = espacio_disponible_actual
+
+        # 4. Creación de geometrías finales si obtuvieron slot
+        if patio_inicial_values and space_patio:
+            
+            tramos_patio = div_logic(
+                ["auto", largo_patio, "auto"], space_patio, eje_div=eje_principal
+            )
+            print("TRAMOS PATIO",tramos_patio)
+            if len(tramos_patio) == 3:
+                _, patio_inicial, _ = tramos_patio
+            else:
+                patio_inicial = space_patio  # Fallback si no cabe centrado
+
+        if patio_losa_dep_values and centro_3:
+            tramos_losa = div_logic(
+                ["auto", largo_losa, "auto"], centro_3, eje_div=eje_principal
+            )
+            if len(tramos_losa) == 3:
+                _, losa_deportiva, _ = tramos_losa
+            else:
+                losa_deportiva = centro_3  # Fallback
+
+        if sum_salon_usos_mult_val and space_sum:
+            sum_ambiente = obtener_sub_polygon_centrado(
+                space_sum,
+                sum_salon_usos_mult_val["Largo"],
+                sum_salon_usos_mult_val["Ancho"],
+            ) or space_sum
+        
+        print("LARGO SUM", sum_salon_usos_mult_val["Largo"])
+        print("ANCHO SUM", sum_salon_usos_mult_val["Ancho"])
+
+    # =========================================================================
+    # RENDERIZADO DE BLOQUES DEL CENTRO
+    # =========================================================================
     if patio_inicial:
+        imprimir_dimensiones_poligono(patio_inicial, "Patio Inicial")
         new_block(
             polygon=patio_inicial,
             alto_z=0.3,
             assembly=mi_modelo,
-            nombre="Patio Inicial",
+            nombre="Patio Inicial - Nivel 1",
             color_hex="#D8D8D8",
-            factory_capas=factory_capas
+            factory_capas=factory_capas,
         )
 
     if losa_deportiva:
@@ -421,21 +515,23 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
             assembly=mi_modelo,
             nombre="Losa Deportiva",
             color_hex="#D8D8D8",
-            factory_capas=factory_capas
+            factory_capas=factory_capas,
         )
 
     if sum_ambiente:
         create_structure(
-                ensamblaje=mi_modelo,
-                polygon=sum_ambiente,                       # El Polygon de Shapely del tramo
-                largos_habitaciones=[sum_salon_usos_mult_val["Largo"]],
-                sufijo_nombre="SUM",
-                posicion_puerta="bottom",             # Orientación de la puerta (top/bottom)
-                nivel=1,
-                max_nivel=1,
-                names_ambientes=["Sala de Usos Múltiples"],
-                factory_capas=factory_capas
-            )
+            ensamblaje=mi_modelo,
+            polygon_pabellon=space_sum,  # Parámetro contenedor corregido
+            polygon=sum_ambiente,
+            largos_habitaciones=[sum_salon_usos_mult_val["Largo"]],
+            anchos_habitaciones=[sum_salon_usos_mult_val["Ancho"]],
+            sufijo_nombre="SUM",
+            posicion_puerta="bottom",
+            nivel=1,
+            max_nivel=1,
+            names_ambientes=["Sala de Usos Múltiples"],
+            factory_capas=factory_capas,
+        )
 
     local_glb_filename = f"plane_{id_project}.glb"
     mi_modelo.save(local_glb_filename)
@@ -449,23 +545,44 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
         url_resultado = subir_archivo_a_s3(
             archivo_binario=archivo_binario_stream,
             nombre_archivo=local_glb_filename,
-            bucket_name=bucket_destino
+            bucket_name=bucket_destino,
         )
 
         if url_resultado:
-            print(f"Archivo GLB '{local_glb_filename}' subido con éxito a S3: {url_resultado}")
+            print(
+                f"Archivo GLB '{local_glb_filename}' subido con éxito a S3: {url_resultado}"
+            )
             os.remove(local_glb_filename)
             print(f"Archivo local '{local_glb_filename}' borrado.")
     except Exception as e:
         print(f"❌ Error durante la subida o borrado del archivo GLB: {e}")
-    
 
     # reunir metadatos
     RESUMEN_AREAS = []
-    
-    RESUMEN_AREAS.append({"inicial": limpiar_distribucion_para_resumen(distribucion_inicial)})
-    RESUMEN_AREAS.append({"primaria" : limpiar_distribucion_para_resumen(distribucion_primaria)})
-    RESUMEN_AREAS.append({"secundaria" : limpiar_distribucion_para_resumen(distribucion_sec)})
-    RESUMEN_AREAS.append({"admin" : limpiar_distribucion_para_resumen(distribucion_admin)})
-    
+
+    RESUMEN_AREAS.append(
+        {
+            "inicial": limpiar_distribucion_para_resumen(
+                distribuciones_finales["inicial"]
+            )
+        }
+    )
+    RESUMEN_AREAS.append(
+        {
+            "primaria": limpiar_distribucion_para_resumen(
+                distribuciones_finales["primaria"]
+            )
+        }
+    )
+    RESUMEN_AREAS.append(
+        {
+            "secundaria": limpiar_distribucion_para_resumen(
+                distribuciones_finales["secundaria"]
+            )
+        }
+    )
+    RESUMEN_AREAS.append(
+        {"admin": limpiar_distribucion_para_resumen(distribuciones_finales["admin"])}
+    )
+
     return mi_modelo, factory_capas, RESUMEN_AREAS

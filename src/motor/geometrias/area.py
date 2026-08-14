@@ -1098,6 +1098,42 @@ class Area:
         # =====================================
         return data
 
+  def exportar_medidas_csv(self, filename="medidas_ambientes.csv"):
+      """
+      Recopila los datos de todos los elementos (aulas, muros, columnas, etc.)
+      y los guarda en un archivo CSV.
+      """
+      all_data = self.get_data()
+      if not all_data:
+          print("No hay datos para exportar a CSV.")
+          return
+
+      try:
+          df = pd.DataFrame(all_data)
+
+          # La columna 'geometria' contiene objetos de Shapely que no son serializables a CSV.
+          # La convertimos a su representación de texto (WKT) para poder guardarla.
+          if 'geometria' in df.columns:
+              df['geometria_wkt'] = df['geometria'].apply(lambda geom: geom.wkt if hasattr(geom, 'wkt') else None)
+              df = df.drop(columns=['geometria']) # Eliminamos la columna original
+
+          # Seleccionamos y ordenamos las columnas más relevantes para el reporte
+          columnas_de_interes = [
+              'description', 'tipo', 'piso', 'ancho', 'largo', 'altura', 
+              'area', 'x', 'y', 'z', 'geometria_wkt'
+          ]
+          
+          # Filtramos para mantener solo las columnas que existen en el DataFrame
+          columnas_existentes = [col for col in columnas_de_interes if col in df.columns]
+          
+          df_final = df[columnas_existentes]
+
+          df_final.to_csv(filename, index=False, encoding='utf-8-sig')
+          print(f"✅ Datos de medidas exportados exitosamente a '{filename}'")
+
+      except Exception as e:
+          print(f"❌ Ocurrió un error al exportar a CSV: {e}")
+
   def obtener_resumen_pisos(self):
     pisos = sorted(set(aula.piso for aula in self.aulas if hasattr(aula, 'piso')))
 

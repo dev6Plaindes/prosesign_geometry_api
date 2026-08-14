@@ -88,26 +88,26 @@ ESTILOS = {
         "legend": False,
     },
     "Aula de Innovacion": {
-                "line_color": "green",
-                "line_width": 1,
-                "dash": None,
-                "fill_color": "green",
-                "legend": True,
-            },
+        "line_color": "green",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "green",
+        "legend": True,
+    },
     "Aulas Primaria": {
-            "line_color": "lightblue",
-            "line_width": 1,
-            "dash": None,
-            "fill_color": "lightblue",
-            "legend": True,
-        },
+        "line_color": "lightblue",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "lightblue",
+        "legend": True,
+    },
     "Aulas Secundaria": {
-            "line_color": "lightgreen",
-            "line_width": 1,
-            "dash": None,
-            "fill_color": "lightgreen",
-            "legend": True,
-        },
+        "line_color": "lightgreen",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "lightgreen",
+        "legend": True,
+    },
     "Biblioteca": {
         "line_color": "lightgreen",
         "line_width": 1,
@@ -143,7 +143,59 @@ ESTILOS = {
     #     "fill_color": "ivory",
     #     "legend": True,
     # },
+    "Sala de Profesores": {
+        "line_color": "ivory",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "ivory",
+        "legend": True,
+    },
     "Área de": {
+        "line_color": "lavender",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "lavender",
+        "legend": True,
+    },
+    "Area de ingreso": {
+        "line_color": "lavender",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "lavender",
+        "legend": True,
+    },
+    "SSHH Prim - Hombres": {
+        "line_color": "lavender",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "lavender",
+        "legend": True,
+    },
+    "SSHH Prim - Mujeres": {
+        "line_color": "lavender",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "lavender",
+        "legend": True,
+    },
+    "SSHH Adm. - Mujeres": {
+        "line_color": "lavender",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "lavender",
+        "legend": True,
+    },
+    "SSHH Adm. - Hombres": {
+        "line_color": "lavender",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "lavender",
+        "legend": True,
+    },
+    # SSHH Adm. - Hombres
+    # SSHH Adm. - Mujeres
+    # SSHH Prim - Mujeres
+    "Sala de reuniones": {
         "line_color": "lavender",
         "line_width": 1,
         "dash": None,
@@ -179,18 +231,260 @@ ESTILOS = {
         "legend": True,  # ¡Importante para que aparezca en la leyenda!
     },
     "Pasadizo": {
-            "line_color": "gray",  # O el color que prefieras para la losa
-            "line_width": 1,
-            "dash": None,
-            "fill_color": "white",
-            "legend": False,  # ¡Importante para que aparezca en la leyenda!
-        },
+        "line_color": "gray",  # O el color que prefieras para la losa
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "white",
+        "legend": False,  # ¡Importante para que aparezca en la leyenda!
+    },
     "Sala de Usos Múltiples": {
         "line_color": "orange",  # O el color que prefieras para la losa
         "line_width": 1,
         "dash": None,
         "fill_color": "orange",
         "legend": True,  # ¡Importante para que aparezca en la leyenda!
+    },
+    # NUEVOS
+    "AUDITORIO MULTIUSOS": {
+        "line_color": "darkorange",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "darkorange",
+        "legend": True,
+    },
+    "COCINA ESCOLAR": {
+        "line_color": "honeydew",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "honeydew",
+        "legend": True,
+    },
+    "COCINA INICIAL": {
+        "line_color": "honeydew",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "honeydew",
+        "legend": True,
+    },
+    "COCINA PRIM - SEC": {
+        "line_color": "honeydew",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "honeydew",
+        "legend": True,
+    },
+    "DIRECCIÓN ADMINISTRATIVA": {
+        "line_color": "beige",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "beige",
+        "legend": True,
+    },
+    "DIRECCION ADM.": {
+        "line_color": "beige",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "beige",
+        "legend": True,
+    },
+    "PATIO INICIAL": {
+        "line_color": "gray",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "gray",
+        "legend": True,
+    },
+    "Patio Primaria Secundaria": {
+        "line_color": "gray",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "lightgray",
+        "legend": True,
+    },
+    "LOSA DEPORTIVA": {
+        "line_color": "gray",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "white",
+        "legend": True,
+    },
+    "SALA DE REUNIONES": {
+        "line_color": "khaki",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "khaki",
+        "legend": True,
+    },
+    "LACTARIO": {
+        "line_color": "mistyrose",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "mistyrose",
+        "legend": True,
+    },
+    "TOPICO": {
+        "line_color": "lightcyan",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "lightcyan",
+        "legend": True,
+    },
+    "SALA DE PSICOMOTRICIDAD": {
+        "line_color": "thistle",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "thistle",
+        "legend": True,
+    },
+    "SALA DE MAESTROS": {
+        "line_color": "ivory",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "ivory",
+        "legend": True,
+    },
+    "SALA DE PROFESORES": {
+        "line_color": "ivory",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "ivory",
+        "legend": True,
+    },
+    "BIBLIOTECA": {
+        "line_color": "lightgreen",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "lightgreen",
+        "legend": True,
+    },
+    "TALLER CREATIVO": {
+        "line_color": "lightyellow",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "lightyellow",
+        "legend": True,
+    },
+    "TALLER CREATIVO SEC": {
+        "line_color": "lightyellow",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "lightyellow",
+        "legend": True,
+    },
+    "TALLER CREATIVO PRIM": {
+        "line_color": "lightyellow",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "lightyellow",
+        "legend": True,
+    },
+    "TALLER EPT": {
+        "line_color": "gold",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "gold",
+        "legend": True,
+    },
+    "AREA DE ESPERA": {
+        "line_color": "lavender",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "lavender",
+        "legend": True,
+    },
+    "ÁREA DE ESPERA": {
+        "line_color": "lavender",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "lavender",
+        "legend": True,
+    },
+    "AREA DE INGRESO": {
+        "line_color": "gainsboro",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "gainsboro",
+        "legend": True,
+    },
+    "AULA DE INNOVACION SEC": {
+        "line_color": "green",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "green",
+        "legend": True,
+    },
+    "AULA DE INNOVACION PRIM": {
+        "line_color": "green",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "green",
+        "legend": True,
+    },
+    "LABORATORIO": {
+        "line_color": "mediumaquamarine",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "mediumaquamarine",
+        "legend": True,
+    },
+    # -------------------------------------------------------------------------
+    # SERVICIOS HIGIÉNICOS (SSHH)
+    # -------------------------------------------------------------------------
+    "SSHH SEC - HOMBRES": {
+        "line_color": "powderblue",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "powderblue",
+        "legend": True,
+    },
+    "SSHH SEC - MUJERES": {
+        "line_color": "pink",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "pink",
+        "legend": True,
+    },
+    "SSHH PRIM - HOMBRES": {
+        "line_color": "powderblue",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "powderblue",
+        "legend": True,
+    },
+    "SSHH PRIM - MUJERES": {
+        "line_color": "pink",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "pink",
+        "legend": True,
+    },
+    "SSHH INICIAL - HOMBRES": {
+        "line_color": "powderblue",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "powderblue",
+        "legend": True,
+    },
+    "SSHH INICIAL - MUJERES": {
+        "line_color": "pink",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "pink",
+        "legend": True,
+    },
+    "SSHH ADM. - HOMBRES": {
+        "line_color": "lightblue",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "lightblue",
+        "legend": True,
+    },
+    "SSHH ADM. - MUJERES": {
+        "line_color": "lightpink",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "lightpink",
+        "legend": True,
     },
     # [Ambiente_1 1] SUM
     # # Patio Primaria Secundaria
@@ -210,13 +504,17 @@ def obtener_estilo(nombre):
     # Primero buscamos coincidencias con los estilos que SÍ llevan leyenda (prioritarios)
     for clave, estilo in ESTILOS.items():
         if estilo["legend"] and clave in nombre:
-            print(f"  -> Coincidencia encontrada (con leyenda): '{clave}'. Aplicando estilo.")
+            print(
+                f"  -> Coincidencia encontrada (con leyenda): '{clave}'. Aplicando estilo."
+            )
             return estilo
 
     # Si no es un ambiente con leyenda, buscamos en los elementos estructurales comunes (muros, losas, etc.)
     for clave, estilo in ESTILOS.items():
         if not estilo["legend"] and clave in nombre:
-            print(f"  -> Coincidencia encontrada (sin leyenda): '{clave}'. Aplicando estilo.")
+            print(
+                f"  -> Coincidencia encontrada (sin leyenda): '{clave}'. Aplicando estilo."
+            )
             return estilo
 
     print(
@@ -556,17 +854,20 @@ def render_2d_shapely_automatico_regex(escena_shapely):
                 for geom in coleccion.geoms:
                     if geom.geom_type == "Polygon":
                         x_fill, y_fill = geom.exterior.xy
-                        fig.add_trace(go.Scatter(
-                            x=list(x_fill), y=list(y_fill),
-                            fill="toself",
-                            fillcolor=estilo["fill_color"],
-                            mode="lines",
-                            line=dict(color="rgba(0,0,0,0)", width=0),
-                            legendgroup=nombre_leyenda,
-                            showlegend=False,
-                            hoveron="fills",
-                            hovertemplate=f"<b>{nombre}</b><extra></extra>",
-                        ))
+                        fig.add_trace(
+                            go.Scatter(
+                                x=list(x_fill),
+                                y=list(y_fill),
+                                fill="toself",
+                                fillcolor=estilo["fill_color"],
+                                mode="lines",
+                                line=dict(color="rgba(0,0,0,0)", width=0),
+                                legendgroup=nombre_leyenda,
+                                showlegend=False,
+                                hoveron="fills",
+                                hovertemplate=f"<b>{nombre}</b><extra></extra>",
+                            )
+                        )
 
         # Añadimos un ÚNICO trazo de línea por cada grupo acumulado
         for nombre_leyenda, datos in grupos_graficos.items():

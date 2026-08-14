@@ -211,8 +211,6 @@ def div_logic_with_spacing(
     return sub_poligonos_finales
 
 
-
-
 def obtener_sub_polygon_centrado(
     polygon: Polygon, 
     largo: float, 
