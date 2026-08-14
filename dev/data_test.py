@@ -1,92 +1,92 @@
-# data_test = {
-#     "name": "NUEVO PROYECTO",
-#     "tipologia": "Educación",
-#     "zone": "Urbano",
-#     "tipo": "UNIDOCENTE",
-#     "number_floors": "1",
-#     "departamento": "ICA",
-#     "provincia": "ICA",
-#     "distrito": "PACHACUTEC",
-#     "responsable": "JOSE MANUEL",
-#     "cliente": "EMPRESA SAC",
-#     "width": 97.18239371688105,
-#     "height": 60.66738392226398,
-#     "vertices_rectangle": [
-#         [
-#             301693.4981041939,
-#             8932939.354030397
-#         ],
-#         [
-#             301787.5850093572,
-#             8932963.68655853
-#         ],
-#         [
-#             301772.3951095247,
-#             8933022.421543121
-#         ],
-#         [
-#             301678.30820436147,
-#             8932998.089014988
-#         ]
-#     ],
-#     "angle": 14.499999999999998,
-#     "excluded_vertices": [],
-#     "aforo": [
-#         {
-#             "grado": "INICIAL",
-#             "aforo_por_grado": 20,
-#             "cantidad_aulas": 2
-#         },
-#         {
-#             "grado": "PRIMARIA",
-#             "aforo_por_grado": 20,
-#             "cantidad_aulas": 6
-#         },
-#         {
-#             "grado": "SECUNDARIA",
-#             "aforo_por_grado": 10,
-#             "cantidad_aulas": 5
-#         }
-#     ],
-#     "vertices": [
-#         {
-#             "vertice": "V1",
-#             "x": 301678.281,
-#             "y": 8932998.195
-#         },
-#         {
-#             "vertice": "V2",
-#             "x": 301772.175,
-#             "y": 8933023.353
-#         },
-#         {
-#             "vertice": "V3",
-#             "x": 301788.096,
-#             "y": 8932963.935
-#         },
-#         {
-#             "vertice": "V4",
-#             "x": 301726.859,
-#             "y": 8932932.563
-#         },
-#         {
-#             "vertice": "V5",
-#             "x": 301678.904,
-#             "y": 8932941.29
-#         }
-#     ],
-#     "ambientes": [
-#         {
-#             "ambienteComplementario": "Cocina escolar",
-#             "capacidad": 0
-#         },
-#         {
-#             "ambienteComplementario": "Sala de Usos Múltiples (SUM)",
-#             "capacidad": 0
-#         }
-#     ],
-#     "user_id": 7
-# }
+data_test = {
+    "name": "NUEVO PROYECTO",
+    "tipologia": "Educación",
+    "zone": "Urbano",
+    "tipo": "UNIDOCENTE",
+    "number_floors": "1",
+    "departamento": "ICA",
+    "provincia": "ICA",
+    "distrito": "PACHACUTEC",
+    "responsable": "JOSE MANUEL",
+    "cliente": "EMPRESA SAC",
+    "width": 97.18239371688105,
+    "height": 60.66738392226398,
+    "vertices_rectangle": [
+        [
+            301693.4981041939,
+            8932939.354030397
+        ],
+        [
+            301787.5850093572,
+            8932963.68655853
+        ],
+        [
+            301772.3951095247,
+            8933022.421543121
+        ],
+        [
+            301678.30820436147,
+            8932998.089014988
+        ]
+    ],
+    "angle": 14.499999999999998,
+    "excluded_vertices": [],
+    "aforo": [
+        {
+            "grado": "INICIAL",
+            "aforo_por_grado": 20,
+            "cantidad_aulas": 2
+        },
+        {
+            "grado": "PRIMARIA",
+            "aforo_por_grado": 20,
+            "cantidad_aulas": 6
+        },
+        {
+            "grado": "SECUNDARIA",
+            "aforo_por_grado": 10,
+            "cantidad_aulas": 5
+        }
+    ],
+    "vertices": [
+        {
+            "vertice": "V1",
+            "x": 301678.281,
+            "y": 8932998.195
+        },
+        {
+            "vertice": "V2",
+            "x": 301772.175,
+            "y": 8933023.353
+        },
+        {
+            "vertice": "V3",
+            "x": 301788.096,
+            "y": 8932963.935
+        },
+        {
+            "vertice": "V4",
+            "x": 301726.859,
+            "y": 8932932.563
+        },
+        {
+            "vertice": "V5",
+            "x": 301678.904,
+            "y": 8932941.29
+        }
+    ],
+    "ambientes": [
+        {
+            "ambienteComplementario": "Cocina escolar",
+            "capacidad": 0
+        },
+        {
+            "ambienteComplementario": "Sala de Usos Múltiples (SUM)",
+            "capacidad": 0
+        }
+    ],
+    "user_id": 7
+}
 
 # data_test = {
 #     "name": "ORUEBA",
@@ -202,50 +202,50 @@
 #     "user_id": 7
 # }
 
-data_test = {
-    "name": "PRUEBA",
-    "tipologia": "Educación",
-    "zone": "Urbano",
-    "tipo": "UNIDOCENTE",
-    "number_floors": "1",
-    "departamento": "LA LIBERTAD",
-    "provincia": "ASCOPE",
-    "distrito": "",
-    "responsable": "ASDJ",
-    "cliente": "EMPRESA SAC",
-    "width": 62.31046294386033,
-    "height": 16.323936188593507,
-    "vertices_rectangle": [
-        [299425.36743488855, 8945590.169950876],
-        [299484.7939796071, 8945608.907068454],
-        [299479.8852773245, 8945624.475483099],
-        [299420.4587326059, 8945605.738365522],
-    ],
-    "angle": 17.5,
-    "excluded_vertices": [],
-    "aforo": [
-        {"grado": "INICIAL", "aforo_por_grado": 0, "cantidad_aulas": 0},
-        {"grado": "PRIMARIA", "aforo_por_grado": 20, "cantidad_aulas": 6},
-        {"grado": "SECUNDARIA", "aforo_por_grado": 0, "cantidad_aulas": 0},
-    ],
-    "vertices": [
-        {"vertice": "V1", "x": 299489.52, "y": 8945625.17},
-        {"vertice": "V2", "x": 299489.49, "y": 8945610.76},
-        {"vertice": "V3", "x": 299457.48, "y": 8945597.96},
-        {"vertice": "V4", "x": 299455.2, "y": 8945582.46},
-        {"vertice": "V5", "x": 299424.9, "y": 8945589.77},
-        {"vertice": "V6", "x": 299413.2, "y": 8945595.47},
-        {"vertice": "V7", "x": 299426.04, "y": 8945613.77},
-        {"vertice": "V8", "x": 299435.99, "y": 8945623.62},
-        {"vertice": "V9", "x": 299460.67, "y": 8945623.23},
-    ],
-    "ambientes": [
-        {"ambienteComplementario": "Dirección administrativa", "capacidad": 0},
-        {"ambienteComplementario": "Sala de Usos Múltiples (SUM)", "capacidad": 0},
-        {"ambienteComplementario": "Patio Inicial", "capacidad": 0},
-    ],
-    "user_id": 7,
-}
+# data_test = {
+#     "name": "PRUEBA",
+#     "tipologia": "Educación",
+#     "zone": "Urbano",
+#     "tipo": "UNIDOCENTE",
+#     "number_floors": "1",
+#     "departamento": "LA LIBERTAD",
+#     "provincia": "ASCOPE",
+#     "distrito": "",
+#     "responsable": "ASDJ",
+#     "cliente": "EMPRESA SAC",
+#     "width": 62.31046294386033,
+#     "height": 16.323936188593507,
+#     "vertices_rectangle": [
+#         [299425.36743488855, 8945590.169950876],
+#         [299484.7939796071, 8945608.907068454],
+#         [299479.8852773245, 8945624.475483099],
+#         [299420.4587326059, 8945605.738365522],
+#     ],
+#     "angle": 17.5,
+#     "excluded_vertices": [],
+#     "aforo": [
+#         {"grado": "INICIAL", "aforo_por_grado": 0, "cantidad_aulas": 0},
+#         {"grado": "PRIMARIA", "aforo_por_grado": 20, "cantidad_aulas": 6},
+#         {"grado": "SECUNDARIA", "aforo_por_grado": 0, "cantidad_aulas": 0},
+#     ],
+#     "vertices": [
+#         {"vertice": "V1", "x": 299489.52, "y": 8945625.17},
+#         {"vertice": "V2", "x": 299489.49, "y": 8945610.76},
+#         {"vertice": "V3", "x": 299457.48, "y": 8945597.96},
+#         {"vertice": "V4", "x": 299455.2, "y": 8945582.46},
+#         {"vertice": "V5", "x": 299424.9, "y": 8945589.77},
+#         {"vertice": "V6", "x": 299413.2, "y": 8945595.47},
+#         {"vertice": "V7", "x": 299426.04, "y": 8945613.77},
+#         {"vertice": "V8", "x": 299435.99, "y": 8945623.62},
+#         {"vertice": "V9", "x": 299460.67, "y": 8945623.23},
+#     ],
+#     "ambientes": [
+#         {"ambienteComplementario": "Dirección administrativa", "capacidad": 0},
+#         {"ambienteComplementario": "Sala de Usos Múltiples (SUM)", "capacidad": 0},
+#         {"ambienteComplementario": "Patio Inicial", "capacidad": 0},
+#     ],
+#     "user_id": 7,
+# }
 
 ambientes_test = [
     {
