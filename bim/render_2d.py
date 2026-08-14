@@ -465,6 +465,21 @@ ESTILOS = {
         "fill_color": "powderblue",
         "legend": True,
     },
+    "Aulas Ciclo I": {
+        "line_color": "powderblue",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "powderblue",
+        "legend": True,
+    },
+    "Aulas Ciclo II": {
+        "line_color": "powderblue",
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "powderblue",
+        "legend": True,
+    },
+    # Aulas Ciclo I
     "SSHH INICIAL - MUJERES": {
         "line_color": "pink",
         "line_width": 1,
