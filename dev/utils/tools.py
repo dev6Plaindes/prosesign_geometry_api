@@ -3,102 +3,89 @@ from shapely.geometry import Polygon, box
 from shapely import affinity
 import math
 
+from typing import List, Union
+from shapely.geometry import Polygon, box
+from shapely import affinity
+import math
+
 def div_logic(
     medidas: List[Union[int, float, str]], 
     polygon: Polygon, 
     eje_div: str = "x"
 ) -> List[Polygon]:
     """
-    Divide un polígono (cuadrante inclinado) en sub-polígonos (tramos) siguiendo 
-    una lista de medidas fijas y/o automáticas ("auto") a lo largo de un eje.
-    
-    Parámetros:
-        - medidas: List, ejemplo [5, "auto", 5]
-        - polygon: Objeto Polygon de Shapely del cuadrante (puede estar rotado).
-        - eje_div: str, "x" para cortes a lo largo del largo (verticales) 
-                       o "y" para cortes a lo largo del ancho (horizontales).
-                       
-    Retorna:
-        - List[Polygon]: Una lista de objetos Polygon de Shapely correspondientes 
-                         a cada división, perfectamente orientados.
+    Divide un polígono rotado en tramos según una lista de medidas sobre 'x' o 'y'.
     """
-    # =========================================================================
-    # 1. DETECTAR ÁNGULO DE INCLINACIÓN
-    # =========================================================================
-    coords = list(polygon.exterior.coords)
-    p0, p1 = coords[0], coords[1]
+    if polygon is None or polygon.is_empty:
+        return []
+
+    # 1. Obtenemos el rectángulo orientado de menor área (Minimum Rotated Rectangle)
+    # Esto garantiza detectar el ángulo exacto del rectángulo sin importar el orden de vértices
+    mrr = polygon.minimum_rotated_rectangle
+    coords = list(mrr.exterior.coords)
     
-    # Calculamos el ángulo en radianes y luego a grados respecto al eje X horizontal
+    # Calcular ángulo respecto a la primera arista del rectángulo contenedor
+    p0, p1 = coords[0], coords[1]
     angulo_rad = math.atan2(p1[1] - p0[1], p1[0] - p0[0])
     angulo_grados = math.degrees(angulo_rad)
-    
-    # Para evitar comportamientos extraños si los vértices vienen en sentido inverso, 
-    # forzamos que esté en un rango controlable.
-    if angulo_grados > 90:
+
+    # Normalizar ángulo
+    while angulo_grados > 90:
         angulo_grados -= 180
-    elif angulo_grados < -90:
+    while angulo_grados < -90:
         angulo_grados += 180
 
-    # =========================================================================
-    # 2. ALINEAR TEMPORALMENTE EL POLÍGONO A 0°
-    # =========================================================================
-    pivote = polygon.centroid
-    # Rotamos en sentido contrario para alinearlo plano
+    # 2. Alineamos temporalmente el polígono original usando el centroide del MRR
+    pivote = mrr.centroid
     poly_alineado = affinity.rotate(polygon, -angulo_grados, origin=pivote)
-    
-    # Obtenemos los límites del polígono alineado
+
+    # Límites del polígono alineado
     min_x, min_y, max_x, max_y = poly_alineado.bounds
     largo_total = max_x - min_x
     ancho_total = max_y - min_y
-    
-    # Determinar qué dimensión vamos a dividir
-    medida_total = largo_total if eje_div.lower() == "x" else ancho_total
-    offset_inicial = min_x if eje_div.lower() == "x" else min_y
 
-    # =========================================================================
-    # 3. LÓGICA DE DIVISIÓN DE MEDIDAS (Tus cálculos originales)
-    # =========================================================================
+    # 3. Selección del eje
+    es_eje_x = eje_div.lower() == "x"
+    medida_total = largo_total if es_eje_x else ancho_total
+    offset_inicial = min_x if es_eje_x else min_y
+
+    # 4. Cálculo de medidas fijas y automáticas
     suma_fijos = sum(m for m in medidas if isinstance(m, (int, float)))
     if suma_fijos > medida_total:
-        print("⚠️ Advertencia: Las medidas fijas superan la longitud total disponible.")
+        print(f"⚠️ Advertencia: Las medidas fijas ({suma_fijos}) superan la medida total ({medida_total:.2f}).")
         return []
 
     cantidad_auto = medidas.count("auto")
-    valor_auto = (medida_total - suma_fijos) / cantidad_auto if cantidad_auto > 0 else 0
-    medidas_resueltas = [valor_auto if m == "auto" else m for m in medidas]
+    valor_auto = (medida_total - suma_fijos) / cantidad_auto if cantidad_auto > 0 else 0.0
+    medidas_resueltas = [valor_auto if m == "auto" else float(m) for m in medidas]
 
-    # =========================================================================
-    # 4. CREAR SUB-POLÍGONOS EN EL ESTADO PLANO (ALINEADO)
-    # =========================================================================
-    sub_poligonos_alineados = []
+    # 5. Generar los cortes intersecando la caja divisora con el polígono alineado real
+    sub_poligonos_finales = []
     coordenada_actual = offset_inicial
 
     for paso in medidas_resueltas:
         coordenada_siguiente = coordenada_actual + paso
-        
-        if eje_div.lower() == "x":
-            # Si dividimos en X, el tramo va de coord_actual a coord_siguiente en X,
-            # y ocupa todo el ancho disponible en Y (de min_y a max_y).
-            sub_box = box(coordenada_actual, min_y, coordenada_siguiente, max_y)
+
+        if es_eje_x:
+            # Corte vertical en el espacio local
+            caja_corte = box(coordenada_actual, min_y - 1.0, coordenada_siguiente, max_y + 1.0)
         else:
-            # Si dividimos en Y, el tramo va de coord_actual a coord_siguiente en Y,
-            # y ocupa todo el largo disponible en X (de min_x a max_x).
-            sub_box = box(min_x, coordenada_actual, max_x, coordenada_siguiente)
-            
-        sub_poligonos_alineados.append(sub_box)
+            # Corte horizontal en el espacio local
+            caja_corte = box(min_x - 1.0, coordenada_actual, max_x + 1.0, coordenada_siguiente)
+
+        # Intersección para recortar bordes irregulares o el polígono interno recortado previo
+        sub_poly_alineado = poly_alineado.intersection(caja_corte)
+
+        if not sub_poly_alineado.is_empty:
+            # Rotar de vuelta al plano original
+            sub_poly_rotado = affinity.rotate(sub_poly_alineado, angulo_grados, origin=pivote)
+            sub_poligonos_finales.append(sub_poly_rotado)
+        else:
+            sub_poligonos_finales.append(None)
+
         coordenada_actual = coordenada_siguiente
 
-    # =========================================================================
-    # 5. ROTAR DE VUELTA LOS TRAMOS AL ÁNGULO ORIGINAL
-    # =========================================================================
-    sub_poligonos_finales = []
-    for sub_poly in sub_poligonos_alineados:
-        # Rotamos de vuelta al ángulo original usando el mismo pivote
-        sub_poly_rotado = affinity.rotate(sub_poly, angulo_grados, origin=pivote)
-        sub_poligonos_finales.append(sub_poly_rotado)
-
     return sub_poligonos_finales
-
 
 def div_logic_with_spacing(
     medidas: List[Union[int, float, str]], 

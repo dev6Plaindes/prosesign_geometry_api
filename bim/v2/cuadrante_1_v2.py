@@ -4,6 +4,7 @@ import io
 import logging
 
 from bim.pabellones_to_csv import exportar_pabellones_a_csv
+from bim.v2.procesar_pabellones import _procesar_layout_multiples_pabellones
 from bim.utils import view_ancho_largo_polygon
 from bim.utils.view_ancho_largo_polygon import imprimir_dimensiones_poligono
 from dev.assemblys.capas import FactoryCapas
@@ -30,7 +31,6 @@ from dev.utils.tools import (
     div_logic_with_spacing,
     obtener_sub_polygon_centrado,
 )
-
 
 # Generacion del cuadrante 1 en el plano Version 2
 # Con shapely para exactitud y poligonos en todos los angulos posibles
@@ -159,39 +159,16 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
         imprimir_dimensiones_poligono(space_centro_2, "AREA MEDIO")
 
     else:
-        print("📐 Aplicando división estándar en cruz para 3 o más pabellones.")
-        medidas_5_tramos = [
-            ancho_aula, ancho_pasadiso, "auto", ancho_pasadiso, ancho_aula
-        ]
-
-        # División en eje principal (Lados)
-        tramos_poligonos = div_logic(
-            medidas_5_tramos, cuadrante_shapely, eje_div=eje_principal
+        # Llamada a la función refactorizada para > 2 pabellones
+        slots, space_centro_2 = _procesar_layout_multiples_pabellones(
+            cuadrante_shapely=cuadrante_shapely,
+            eje_principal=eje_principal,
+            eje_secundario=eje_secundario,
+            ancho_aula=ancho_aula,
+            ancho_pasadiso=ancho_pasadiso,
+            mi_modelo=mi_modelo,
+            factory_capas=factory_capas,
         )
-        primaria, pasadizo_primaria, space_centro_1, pasadizo_secundaria, secundaria = (
-            tramos_poligonos
-        )
-
-        # División en eje secundario (Extremos)
-        tramos_poligonos_2 = div_logic(
-            medidas_5_tramos, space_centro_1, eje_div=eje_secundario
-        )
-
-        if len(tramos_poligonos_2) == 5:
-            admin, pasadizo_admin, space_centro_2, pasadizo_inicial, inicial = (
-                tramos_poligonos_2
-            )
-        else:
-            admin, pasadizo_admin, space_centro_2, pasadizo_inicial, inicial = (
-                None, None, space_centro_1, None, None
-            )
-
-        slots = {
-            "lateral_1": {"polygon": primaria, "pasadizo": pasadizo_primaria},
-            "lateral_2": {"polygon": secundaria, "pasadizo": pasadizo_secundaria},
-            "extremo_1": {"polygon": admin, "pasadizo": pasadizo_admin},
-            "extremo_2": {"polygon": inicial, "pasadizo": pasadizo_inicial},
-        }
 
     # =========================================================================
     # 4. ASIGNACIÓN FINAL DE PABELLONES A SLOTS
