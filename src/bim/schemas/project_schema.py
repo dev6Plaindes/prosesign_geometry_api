@@ -1,11 +1,12 @@
 # [DOCUMENTACIÓN] Se agregaron campos number_floors y ambientes para la Tarea 5&6 de complementarios y balcones.
 from pydantic import BaseModel, Field
-from typing import TypedDict, List, Optional
+from typing import Dict, TypedDict, List, Optional
 
 class Aforo(TypedDict):
     grado : str
     aforo_por_grado : int
     cantidad_aulas : int
+    aulas: Dict[str, int]
     
 class Vertice(TypedDict):
     vertice : str
