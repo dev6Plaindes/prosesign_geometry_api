@@ -181,7 +181,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
         if num_pabellones >= 1:
             asignacion_final[nombres_activos[0]] = {
                 "data": pabellones_activos[nombres_activos[0]],
-                "slot": slots["lateral_1"],
+                "slot": slots["lateral_1"], 
             }
         if num_pabellones == 2:
             asignacion_final[nombres_activos[1]] = {

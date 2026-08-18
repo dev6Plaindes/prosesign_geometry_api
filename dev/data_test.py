@@ -12,80 +12,62 @@ data_test = {
     "width": 97.18239371688105,
     "height": 60.66738392226398,
     "vertices_rectangle": [
-        [
-            301693.4981041939,
-            8932939.354030397
-        ],
-        [
-            301787.5850093572,
-            8932963.68655853
-        ],
-        [
-            301772.3951095247,
-            8933022.421543121
-        ],
-        [
-            301678.30820436147,
-            8932998.089014988
-        ]
+        [301693.4981041939, 8932939.354030397],
+        [301787.5850093572, 8932963.68655853],
+        [301772.3951095247, 8933022.421543121],
+        [301678.30820436147, 8932998.089014988],
     ],
     "angle": 14.499999999999998,
     "excluded_vertices": [],
     "aforo": [
         {
             "grado": "INICIAL",
-            "aforo_por_grado": 20,
-            "cantidad_aulas": 2
+            "aforo_por_grado": 30,
+            "cantidad_aulas": 3,
+            "aulas": {"aula_ciclo_i": 30, "aula_ciclo_ii": 20},
         },
         {
             "grado": "PRIMARIA",
-            "aforo_por_grado": 20,
-            "cantidad_aulas": 6
+            "aforo_por_grado": 30,
+            "cantidad_aulas": 6,
+            "aulas": {
+                "aula_1_prim": 30,
+                "aula_2_prim": 30,
+                "aula_3_prim": 30,
+                "aula_4_prim": 30,
+                "aula_5_prim": 30,
+                "aula_6_prim": 30,
+            },
         },
         {
             "grado": "SECUNDARIA",
-            "aforo_por_grado": 10,
-            "cantidad_aulas": 5
-        }
+            "aforo_por_grado": 35,
+            "cantidad_aulas": 5,
+            "aulas": {
+                "aula_1_sec": 35,
+                "aula_2_sec": 35,
+                "aula_3_sec": 35,
+                "aula_4_sec": 35,
+                "aula_5_sec": 35,
+            },
+        },
     ],
     "vertices": [
-        {
-            "vertice": "V1",
-            "x": 301678.281,
-            "y": 8932998.195
-        },
-        {
-            "vertice": "V2",
-            "x": 301772.175,
-            "y": 8933023.353
-        },
-        {
-            "vertice": "V3",
-            "x": 301788.096,
-            "y": 8932963.935
-        },
-        {
-            "vertice": "V4",
-            "x": 301726.859,
-            "y": 8932932.563
-        },
-        {
-            "vertice": "V5",
-            "x": 301678.904,
-            "y": 8932941.29
-        }
+        {"vertice": "V1", "x": 301678.281, "y": 8932998.195},
+        {"vertice": "V2", "x": 301772.175, "y": 8933023.353},
+        {"vertice": "V3", "x": 301788.096, "y": 8932963.935},
+        {"vertice": "V4", "x": 301726.859, "y": 8932932.563},
+        {"vertice": "V5", "x": 301678.904, "y": 8932941.29},
     ],
     "ambientes": [
+        {"ambienteComplementario": "Cocina escolar", "capacidad": 0},
+        {"ambienteComplementario": "Sala de Usos Múltiples (SUM)", "capacidad": 0},
         {
-            "ambienteComplementario": "Cocina escolar",
+            "ambienteComplementario": "Dirección administrativa",
             "capacidad": 0
         },
-        {
-            "ambienteComplementario": "Sala de Usos Múltiples (SUM)",
-            "capacidad": 0
-        }
     ],
-    "user_id": 7
+    "user_id": 7,
 }
 
 # data_test = {

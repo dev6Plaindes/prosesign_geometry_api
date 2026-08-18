@@ -3,7 +3,13 @@ from dev.utils.tools import div_logic
 
 
 def _procesar_layout_multiples_pabellones(
-    cuadrante_shapely, eje_principal, eje_secundario, ancho_aula, ancho_pasadiso, mi_modelo, factory_capas
+    cuadrante_shapely,
+    eje_principal,
+    eje_secundario,
+    ancho_aula,
+    ancho_pasadiso,
+    mi_modelo,
+    factory_capas,
 ):
     """
     Procesa la división en cruz para 3 o más pabellones.
@@ -36,6 +42,15 @@ def _procesar_layout_multiples_pabellones(
             tramos_poligonos_2
         )
 
+        # new_block(
+        #     polygon=pasadizo_admin,
+        #     alto_z=0.3,
+        #     assembly=mi_modelo,
+        #     nombre="Primaria Test",
+        #     color_hex="#D8D8D8",
+        #     factory_capas=factory_capas,
+        # )
+
     else:
         admin, pasadizo_admin, space_centro_2, pasadizo_inicial, inicial = (
             None,
@@ -54,7 +69,9 @@ def _procesar_layout_multiples_pabellones(
             "polygon": secundaria,
             "pasadizo": pasadizo_secundaria,
         },  # Derecha (Secundaria)
-        "extremo_1": {"polygon": admin, "pasadizo": pasadizo_admin},  # Superior (Admin)
+        "extremo_1": {
+            "polygon": admin,
+            "pasadizo": pasadizo_admin},  # Superior (Admin)
         "extremo_2": {
             "polygon": inicial,
             "pasadizo": pasadizo_inicial,
