@@ -28,7 +28,7 @@ def procesar_y_extraer_sheets(datos, nombre_archivo_google):
         sh = conectar_google_sheets(ruta_json, nombre_archivo_google)
 
         try:
-            aforo_inicial = int(datos[0]["aforo_por_grado"])
+            aforo_inicial = int(datos[0]["capacidad_x_aula"])
             aula_ciclo_i = int(datos[0]["aulas"]["aula_ciclo_i"])
             aula_ciclo_ii = int(datos[0]["aulas"]["aula_ciclo_ii"])
 
@@ -36,7 +36,7 @@ def procesar_y_extraer_sheets(datos, nombre_archivo_google):
             aforo_inicial = 0
 
         try:
-            aforo_primaria = int(datos[1]["aforo_por_grado"])
+            aforo_primaria = int(datos[1]["capacidad_x_aula"])
 
             aula_1_prim = int(datos[1]["aulas"]["aula_1_prim"])
             aula_2_prim = int(datos[1]["aulas"]["aula_2_prim"])
@@ -49,8 +49,7 @@ def procesar_y_extraer_sheets(datos, nombre_archivo_google):
             aforo_primaria = 0
 
         try:
-            aforo_sec = int(datos[2]["aforo_por_grado"])
-            
+            aforo_sec = int(datos[2]["capacidad_x_aula"])
             
             aula_1_sec = int(datos[2]["aulas"]["aula_1_sec"])
             aula_2_sec = int(datos[2]["aulas"]["aula_2_sec"])

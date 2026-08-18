@@ -6,6 +6,7 @@ class Aforo(TypedDict):
     grado : str
     aforo_por_grado : int
     cantidad_aulas : int
+    capacidad_x_aula: int
     aulas: Dict[str, int]
     
 class Vertice(TypedDict):
