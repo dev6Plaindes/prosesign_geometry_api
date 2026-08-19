@@ -32,6 +32,7 @@ from dev.utils.tools import (
     obtener_sub_polygon_centrado,
 )
 
+
 # Generacion del cuadrante 1 en el plano Version 2
 # Con shapely para exactitud y poligonos en todos los angulos posibles
 def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: int):
@@ -148,7 +149,9 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
             medidas_2_pabellones, cuadrante_shapely, eje_div=eje_principal
         )
 
-        slot_lat_1, pasadizo_lat_1, space_centro_2, pasadizo_lat_2, slot_lat_2 = tramos_3
+        slot_lat_1, pasadizo_lat_1, space_centro_2, pasadizo_lat_2, slot_lat_2 = (
+            tramos_3
+        )
 
         slots = {
             "lateral_1": {"polygon": slot_lat_1, "pasadizo": pasadizo_lat_1},
@@ -181,7 +184,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
         if num_pabellones >= 1:
             asignacion_final[nombres_activos[0]] = {
                 "data": pabellones_activos[nombres_activos[0]],
-                "slot": slots["lateral_1"], 
+                "slot": slots["lateral_1"],
             }
         if num_pabellones == 2:
             asignacion_final[nombres_activos[1]] = {
@@ -289,14 +292,24 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
         container_polygon = obtener_polygon_real_del_piso(distribucion[0], slot_polygon)
         max_nivel = len(distribucion)
 
-        lado_escalera = "derecha" if nombre_pabellon == "primaria" else "izquierda"
-        posicion_vertical_escalera = "bottom" if nombre_pabellon == "admin" else "top"
+        lado_escalera = "izquierda" if nombre_pabellon == "primaria" else "derecha"
+        posicion_vertical_escalera = "top" if nombre_pabellon == "admin" else "bottom"
+
         poly_escalera = crear_poligono_escalera(
             principal_polygon=slot_polygon,
             container_polygon=container_polygon,
             lado=lado_escalera,
             posicion_vertical=posicion_vertical_escalera,
         )
+
+        # new_block(
+        #     polygon=poly_escalera,
+        #     alto_z=0.3,
+        #     assembly=mi_modelo,
+        #     nombre=f"Escalera test {nombre_pabellon.capitalize()} - Nivel 1",
+        #     color_hex="#D8D8D8",
+        #     factory_capas=factory_capas,
+        # )
 
         if pasadizo_polygon:
             new_block(
@@ -310,7 +323,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
 
         # REvisando medidas
         print("PISOS DISTRIBUICION", distribucion)
-    
+
         for index, piso_data in enumerate(distribucion):
             nivel_actual = index + 1
             nombres_ambientes_piso = [item["ambiente"] for item in piso_data]
@@ -352,21 +365,26 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
 
     # 1. Búsqueda de ambientes
     patio_inicial_list = [
-        row for row in data_pab_medio
+        row
+        for row in data_pab_medio
         if "PATIOINICIAL" in row.get("Ambientes", "").upper().replace(" ", "")
     ]
     patio_losa_dep_list = [
-        row for row in data_pab_medio
+        row
+        for row in data_pab_medio
         if "LOSADEPORTIVA" in row.get("Ambientes", "").upper().replace(" ", "")
     ]
     sum_salon_usos_mult_list = [
-        row for row in data_pab_medio
+        row
+        for row in data_pab_medio
         if "SUM" in row.get("Ambientes", "").upper().replace(" ", "")
     ]
 
     patio_inicial_values = patio_inicial_list[0] if patio_inicial_list else None
     patio_losa_dep_values = patio_losa_dep_list[0] if patio_losa_dep_list else None
-    sum_salon_usos_mult_val = sum_salon_usos_mult_list[0] if sum_salon_usos_mult_list else None
+    sum_salon_usos_mult_val = (
+        sum_salon_usos_mult_list[0] if sum_salon_usos_mult_list else None
+    )
 
     # Polígonos resultantes finales
     patio_inicial = None
@@ -378,14 +396,24 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
 
     if space_centro_2:
         # Preparamos dimensiones
-        ancho_patio = patio_inicial_values.get("Ancho", 0) if patio_inicial_values else 0
-        largo_patio = patio_inicial_values.get("Largo", 0) if patio_inicial_values else 0
+        ancho_patio = (
+            patio_inicial_values.get("Ancho", 0) if patio_inicial_values else 0
+        )
+        largo_patio = (
+            patio_inicial_values.get("Largo", 0) if patio_inicial_values else 0
+        )
 
         ancho_losa = patio_losa_dep_values["Ancho"] if patio_losa_dep_values else "auto"
-        largo_losa = patio_losa_dep_values.get("Largo", 0) if patio_losa_dep_values else 0
+        largo_losa = (
+            patio_losa_dep_values.get("Largo", 0) if patio_losa_dep_values else 0
+        )
 
-        ancho_sum = sum_salon_usos_mult_val["Ancho"] if sum_salon_usos_mult_val else "auto"
-        largo_sum = sum_salon_usos_mult_val.get("Largo", 0) if sum_salon_usos_mult_val else 0
+        ancho_sum = (
+            sum_salon_usos_mult_val["Ancho"] if sum_salon_usos_mult_val else "auto"
+        )
+        largo_sum = (
+            sum_salon_usos_mult_val.get("Largo", 0) if sum_salon_usos_mult_val else 0
+        )
 
         # INTENTO 1: División conjunta de los 3 tramos
         medidas_centro = [
@@ -411,42 +439,76 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
             for amb in data_pab_medio:
                 nombre_amb = amb.get("Ambientes", "").upper().replace(" ", "")
 
-                if "PATIOINICIAL" in nombre_amb and patio_inicial_values and not space_patio:
+                if (
+                    "PATIOINICIAL" in nombre_amb
+                    and patio_inicial_values
+                    and not space_patio
+                ):
                     # Validar límites
                     bounds = espacio_disponible_actual.bounds
                     w_disp, h_disp = bounds[2] - bounds[0], bounds[3] - bounds[1]
-                    
-                    if (ancho_patio <= w_disp and largo_patio <= h_disp) or (largo_patio <= w_disp and ancho_patio <= h_disp):
-                        tramos = div_logic([ancho_patio, "auto"], espacio_disponible_actual, eje_div=eje_secundario)
+
+                    if (ancho_patio <= w_disp and largo_patio <= h_disp) or (
+                        largo_patio <= w_disp and ancho_patio <= h_disp
+                    ):
+                        tramos = div_logic(
+                            [ancho_patio, "auto"],
+                            espacio_disponible_actual,
+                            eje_div=eje_secundario,
+                        )
                         if len(tramos) >= 1:
                             space_patio = tramos[0]
-                            espacio_disponible_actual = tramos[-1] if len(tramos) > 1 else espacio_disponible_actual
+                            espacio_disponible_actual = (
+                                tramos[-1]
+                                if len(tramos) > 1
+                                else espacio_disponible_actual
+                            )
 
-                elif "LOSADEPORTIVA" in nombre_amb and patio_losa_dep_values and not centro_3:
+                elif (
+                    "LOSADEPORTIVA" in nombre_amb
+                    and patio_losa_dep_values
+                    and not centro_3
+                ):
                     if isinstance(ancho_losa, (int, float)):
-                        tramos = div_logic([ancho_losa, "auto"], espacio_disponible_actual, eje_div=eje_secundario)
+                        tramos = div_logic(
+                            [ancho_losa, "auto"],
+                            espacio_disponible_actual,
+                            eje_div=eje_secundario,
+                        )
                         if len(tramos) >= 1:
                             centro_3 = tramos[0]
-                            espacio_disponible_actual = tramos[-1] if len(tramos) > 1 else espacio_disponible_actual
+                            espacio_disponible_actual = (
+                                tramos[-1]
+                                if len(tramos) > 1
+                                else espacio_disponible_actual
+                            )
                     else:
                         centro_3 = espacio_disponible_actual
 
                 elif "SUM" in nombre_amb and sum_salon_usos_mult_val and not space_sum:
                     if isinstance(ancho_sum, (int, float)):
-                        tramos = div_logic([ancho_sum, "auto"], espacio_disponible_actual, eje_div=eje_secundario)
+                        tramos = div_logic(
+                            [ancho_sum, "auto"],
+                            espacio_disponible_actual,
+                            eje_div=eje_secundario,
+                        )
                         if len(tramos) >= 1:
                             space_sum = tramos[0]
-                            espacio_disponible_actual = tramos[-1] if len(tramos) > 1 else espacio_disponible_actual
+                            espacio_disponible_actual = (
+                                tramos[-1]
+                                if len(tramos) > 1
+                                else espacio_disponible_actual
+                            )
                     else:
                         space_sum = espacio_disponible_actual
 
         # 4. Creación de geometrías finales si obtuvieron slot
         if patio_inicial_values and space_patio:
-            
+
             tramos_patio = div_logic(
                 ["auto", largo_patio, "auto"], space_patio, eje_div=eje_principal
             )
-            print("TRAMOS PATIO",tramos_patio)
+            print("TRAMOS PATIO", tramos_patio)
             if len(tramos_patio) == 3:
                 _, patio_inicial, _ = tramos_patio
             else:
@@ -462,12 +524,15 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
                 losa_deportiva = centro_3  # Fallback
 
         if sum_salon_usos_mult_val and space_sum:
-            sum_ambiente = obtener_sub_polygon_centrado(
-                space_sum,
-                sum_salon_usos_mult_val["Largo"],
-                sum_salon_usos_mult_val["Ancho"],
-            ) or space_sum
-        
+            sum_ambiente = (
+                obtener_sub_polygon_centrado(
+                    space_sum,
+                    sum_salon_usos_mult_val["Largo"],
+                    sum_salon_usos_mult_val["Ancho"],
+                )
+                or space_sum
+            )
+
         print("LARGO SUM", sum_salon_usos_mult_val["Largo"])
         print("ANCHO SUM", sum_salon_usos_mult_val["Ancho"])
 

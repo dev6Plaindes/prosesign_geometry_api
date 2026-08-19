@@ -276,7 +276,7 @@ def create_structure(
             sufijo_nombre=sufijo_nombre,
             posicion_puerta=posicion_puerta,
             nivel=nivel_escalera,
-            orientacion="vertical" if is_original_vertical else "horizontal",
+            orientacion="horizontal" if is_original_vertical else "vertical",
             desplazamiento_x_bloque=0,
             desplazamiento_y_bloque=0
         )

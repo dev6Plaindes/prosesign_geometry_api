@@ -76,127 +76,127 @@
 #     "user_id": 7,
 # }
 
-data_test = {
-    "name": "PRUEBA",
-    "tipologia": "Educación",
-    "zone": "Urbano",
-    "tipo": "UNIDOCENTE",
-    "number_floors": "1",
-    "departamento": "LA LIBERTAD",
-    "provincia": "TRUJILLO",
-    "distrito": "",
-    "responsable": "JOSE MANUEL",
-    "cliente": "SCSCSC",
-    "width": 57.95635570079321,
-    "height": 56.79077217262238,
-    "vertices_rectangle": [
-        [
-            231679.21685574757,
-            8187154.958893629
-        ],
-        [
-            231633.5466242155,
-            8187190.640389085
-        ],
-        [
-            231598.5827336348,
-            8187145.888649907
-        ],
-        [
-            231644.2529651669,
-            8187110.207154452
-        ]
-    ],
-    "angle": 142,
-    "excluded_vertices": [],
-    "aforo": [
-        {
-            "grado": "INICIAL",
-            "aforo_por_grado": 30,
-            "cantidad_aulas": 3,
-            "capacidad_x_aula": 20,
-            "aulas": {
-                "aula_ciclo_i": 30,
-                "aula_ciclo_ii": 20
-            }
-        },
-        {
-            "grado": "PRIMARIA",
-            "aforo_por_grado": 60,
-            "cantidad_aulas": 12,
-            "capacidad_x_aula": 30,
-            "aulas": {
-                "aula_1_prim": 60,
-                "aula_2_prim": 60,
-                "aula_3_prim": 60,
-                "aula_4_prim": 60,
-                "aula_5_prim": 60,
-                "aula_6_prim": 60
-            }
-        },
-        {
-            "grado": "SECUNDARIA",
-            "aforo_por_grado": 35,
-            "cantidad_aulas": 5,
-            "capacidad_x_aula": 40,
-            "aulas": {
-                "aula_1_sec": 35,
-                "aula_2_sec": 35,
-                "aula_3_sec": 35,
-                "aula_4_sec": 35,
-                "aula_5_sec": 35
-            }
-        }
-    ],
-    "vertices": [
-        {
-            "vertice": "V1",
-            "x": 231596.6272,
-            "y": 8187143.6234
-        },
-        {
-            "vertice": "V2",
-            "x": 231633.5756,
-            "y": 8187190.6808
-        },
-        {
-            "vertice": "V3",
-            "x": 231681.4999,
-            "y": 8187157.1679
-        },
-        {
-            "vertice": "V4",
-            "x": 231675.8424,
-            "y": 8187150.0191
-        },
-        {
-            "vertice": "V5",
-            "x": 231650.3865,
-            "y": 8187117.8526
-        },
-        {
-            "vertice": "V6",
-            "x": 231646.3611,
-            "y": 8187112.7447
-        },
-        {
-            "vertice": "V7",
-            "x": 231644.2115,
-            "y": 8187110.1206
-        }
-    ],
-    "ambientes": [
-        {
-            "ambienteComplementario": "Dirección administrativa",
-            "capacidad": 0
-        },
-        {
-            "ambienteComplementario": "Sala de Usos Múltiples (SUM)",
-            "capacidad": 0
-        }
-    ],
-    "user_id": 7
-}
+# data_test = {
+#     "name": "PRUEBA",
+#     "tipologia": "Educación",
+#     "zone": "Urbano",
+#     "tipo": "UNIDOCENTE",
+#     "number_floors": "1",
+#     "departamento": "LA LIBERTAD",
+#     "provincia": "TRUJILLO",
+#     "distrito": "",
+#     "responsable": "JOSE MANUEL",
+#     "cliente": "SCSCSC",
+#     "width": 57.95635570079321,
+#     "height": 56.79077217262238,
+#     "vertices_rectangle": [
+#         [
+#             231679.21685574757,
+#             8187154.958893629
+#         ],
+#         [
+#             231633.5466242155,
+#             8187190.640389085
+#         ],
+#         [
+#             231598.5827336348,
+#             8187145.888649907
+#         ],
+#         [
+#             231644.2529651669,
+#             8187110.207154452
+#         ]
+#     ],
+#     "angle": 142,
+#     "excluded_vertices": [],
+#     "aforo": [
+#         {
+#             "grado": "INICIAL",
+#             "aforo_por_grado": 30,
+#             "cantidad_aulas": 3,
+#             "capacidad_x_aula": 20,
+#             "aulas": {
+#                 "aula_ciclo_i": 30,
+#                 "aula_ciclo_ii": 20
+#             }
+#         },
+#         {
+#             "grado": "PRIMARIA",
+#             "aforo_por_grado": 60,
+#             "cantidad_aulas": 12,
+#             "capacidad_x_aula": 30,
+#             "aulas": {
+#                 "aula_1_prim": 60,
+#                 "aula_2_prim": 60,
+#                 "aula_3_prim": 60,
+#                 "aula_4_prim": 60,
+#                 "aula_5_prim": 60,
+#                 "aula_6_prim": 60
+#             }
+#         },
+#         {
+#             "grado": "SECUNDARIA",
+#             "aforo_por_grado": 35,
+#             "cantidad_aulas": 5,
+#             "capacidad_x_aula": 40,
+#             "aulas": {
+#                 "aula_1_sec": 35,
+#                 "aula_2_sec": 35,
+#                 "aula_3_sec": 35,
+#                 "aula_4_sec": 35,
+#                 "aula_5_sec": 35
+#             }
+#         }
+#     ],
+#     "vertices": [
+#         {
+#             "vertice": "V1",
+#             "x": 231596.6272,
+#             "y": 8187143.6234
+#         },
+#         {
+#             "vertice": "V2",
+#             "x": 231633.5756,
+#             "y": 8187190.6808
+#         },
+#         {
+#             "vertice": "V3",
+#             "x": 231681.4999,
+#             "y": 8187157.1679
+#         },
+#         {
+#             "vertice": "V4",
+#             "x": 231675.8424,
+#             "y": 8187150.0191
+#         },
+#         {
+#             "vertice": "V5",
+#             "x": 231650.3865,
+#             "y": 8187117.8526
+#         },
+#         {
+#             "vertice": "V6",
+#             "x": 231646.3611,
+#             "y": 8187112.7447
+#         },
+#         {
+#             "vertice": "V7",
+#             "x": 231644.2115,
+#             "y": 8187110.1206
+#         }
+#     ],
+#     "ambientes": [
+#         {
+#             "ambienteComplementario": "Dirección administrativa",
+#             "capacidad": 0
+#         },
+#         {
+#             "ambienteComplementario": "Sala de Usos Múltiples (SUM)",
+#             "capacidad": 0
+#         }
+#     ],
+#     "user_id": 7
+# }
 
 # data_test = {
 #     "name": "PRUEBA",
@@ -271,137 +271,137 @@ data_test = {
 #     "user_id": 7,
 # }
 
-# data_test = {
-#     "name": "PRUEBA",
-#     "tipologia": "Educación",
-#     "zone": "Urbano",
-#     "tipo": "UNIDOCENTE",
-#     "number_floors": "1",
-#     "departamento": "PIURA",
-#     "provincia": "HUANCABAMBA",
-#     "distrito": "CANCHAQUE",
-#     "responsable": "JOSE MA",
-#     "cliente": "SCSCSC",
-#     "width": 62.31046294386033,
-#     "height": 16.323936188593507,
-#     "vertices_rectangle": [
-#         [
-#             299425.36743488855,
-#             8945590.169950876
-#         ],
-#         [
-#             299484.7939796071,
-#             8945608.907068454
-#         ],
-#         [
-#             299479.8852773245,
-#             8945624.475483099
-#         ],
-#         [
-#             299420.4587326059,
-#             8945605.738365522
-#         ]
-#     ],
-#     "angle": 17.5,
-#     "excluded_vertices": [],
-#     "aforo": [
-#         {
-#             "grado": "INICIAL",
-#             "aforo_por_grado": 30,
-#             "cantidad_aulas": 3,
-#             "capacidad_x_aula": 20,
-#             "aulas": {
-#                 "aula_ciclo_i": 30,
-#                 "aula_ciclo_ii": 20
-#             }
-#         },
-#         {
-#             "grado": "PRIMARIA",
-#             "aforo_por_grado": 60,
-#             "cantidad_aulas": 12,
-#             "capacidad_x_aula": 30,
-#             "aulas": {
-#                 "aula_1_prim": 60,
-#                 "aula_2_prim": 60,
-#                 "aula_3_prim": 60,
-#                 "aula_4_prim": 60,
-#                 "aula_5_prim": 60,
-#                 "aula_6_prim": 60
-#             }
-#         },
-#         {
-#             "grado": "SECUNDARIA",
-#             "aforo_por_grado": 35,
-#             "cantidad_aulas": 5,
-#             "capacidad_x_aula": 40,
-#             "aulas": {
-#                 "aula_1_sec": 35,
-#                 "aula_2_sec": 35,
-#                 "aula_3_sec": 35,
-#                 "aula_4_sec": 35,
-#                 "aula_5_sec": 35
-#             }
-#         }
-#     ],
-#     "vertices": [
-#         {
-#             "vertice": "V1",
-#             "x": 299489.52,
-#             "y": 8945625.17
-#         },
-#         {
-#             "vertice": "V2",
-#             "x": 299489.49,
-#             "y": 8945610.76
-#         },
-#         {
-#             "vertice": "V3",
-#             "x": 299457.48,
-#             "y": 8945597.96
-#         },
-#         {
-#             "vertice": "V4",
-#             "x": 299455.2,
-#             "y": 8945582.46
-#         },
-#         {
-#             "vertice": "V5",
-#             "x": 299424.9,
-#             "y": 8945589.77
-#         },
-#         {
-#             "vertice": "V6",
-#             "x": 299413.2,
-#             "y": 8945595.47
-#         },
-#         {
-#             "vertice": "V7",
-#             "x": 299426.04,
-#             "y": 8945613.77
-#         },
-#         {
-#             "vertice": "V8",
-#             "x": 299435.99,
-#             "y": 8945623.62
-#         },
-#         {
-#             "vertice": "V9",
-#             "x": 299460.67,
-#             "y": 8945623.23
-#         }
-#     ],
-#     "ambientes": [
-#         {
-#             "ambienteComplementario": "Dirección administrativa",
-#             "capacidad": 0
-#         },
-#         {
-#             "ambienteComplementario": "Sala de Usos Múltiples (SUM)",
-#             "capacidad": 0
-#         }
-#     ],
-#     "user_id": 7
-# }
+data_test = {
+    "name": "PRUEBA",
+    "tipologia": "Educación",
+    "zone": "Urbano",
+    "tipo": "UNIDOCENTE",
+    "number_floors": "1",
+    "departamento": "PIURA",
+    "provincia": "HUANCABAMBA",
+    "distrito": "CANCHAQUE",
+    "responsable": "JOSE MA",
+    "cliente": "SCSCSC",
+    "width": 62.31046294386033,
+    "height": 16.323936188593507,
+    "vertices_rectangle": [
+        [
+            299425.36743488855,
+            8945590.169950876
+        ],
+        [
+            299484.7939796071,
+            8945608.907068454
+        ],
+        [
+            299479.8852773245,
+            8945624.475483099
+        ],
+        [
+            299420.4587326059,
+            8945605.738365522
+        ]
+    ],
+    "angle": 17.5,
+    "excluded_vertices": [],
+    "aforo": [
+        {
+            "grado": "INICIAL",
+            "aforo_por_grado": 30,
+            "cantidad_aulas": 3,
+            "capacidad_x_aula": 20,
+            "aulas": {
+                "aula_ciclo_i": 30,
+                "aula_ciclo_ii": 20
+            }
+        },
+        {
+            "grado": "PRIMARIA",
+            "aforo_por_grado": 60,
+            "cantidad_aulas": 12,
+            "capacidad_x_aula": 30,
+            "aulas": {
+                "aula_1_prim": 60,
+                "aula_2_prim": 60,
+                "aula_3_prim": 60,
+                "aula_4_prim": 60,
+                "aula_5_prim": 60,
+                "aula_6_prim": 60
+            }
+        },
+        {
+            "grado": "SECUNDARIA",
+            "aforo_por_grado": 35,
+            "cantidad_aulas": 5,
+            "capacidad_x_aula": 40,
+            "aulas": {
+                "aula_1_sec": 35,
+                "aula_2_sec": 35,
+                "aula_3_sec": 35,
+                "aula_4_sec": 35,
+                "aula_5_sec": 35
+            }
+        }
+    ],
+    "vertices": [
+        {
+            "vertice": "V1",
+            "x": 299489.52,
+            "y": 8945625.17
+        },
+        {
+            "vertice": "V2",
+            "x": 299489.49,
+            "y": 8945610.76
+        },
+        {
+            "vertice": "V3",
+            "x": 299457.48,
+            "y": 8945597.96
+        },
+        {
+            "vertice": "V4",
+            "x": 299455.2,
+            "y": 8945582.46
+        },
+        {
+            "vertice": "V5",
+            "x": 299424.9,
+            "y": 8945589.77
+        },
+        {
+            "vertice": "V6",
+            "x": 299413.2,
+            "y": 8945595.47
+        },
+        {
+            "vertice": "V7",
+            "x": 299426.04,
+            "y": 8945613.77
+        },
+        {
+            "vertice": "V8",
+            "x": 299435.99,
+            "y": 8945623.62
+        },
+        {
+            "vertice": "V9",
+            "x": 299460.67,
+            "y": 8945623.23
+        }
+    ],
+    "ambientes": [
+        {
+            "ambienteComplementario": "Dirección administrativa",
+            "capacidad": 0
+        },
+        {
+            "ambienteComplementario": "Sala de Usos Múltiples (SUM)",
+            "capacidad": 0
+        }
+    ],
+    "user_id": 7
+}
 
 ambientes_test = [
     {
