@@ -195,7 +195,7 @@ ESTILOS = {
     # SSHH Adm. - Hombres
     # SSHH Adm. - Mujeres
     # SSHH Prim - Mujeres
-    "Sala de reuniones": {
+    "Sala de Reuniones": {
         "line_color": "lavender",
         "line_width": 1,
         "dash": None,

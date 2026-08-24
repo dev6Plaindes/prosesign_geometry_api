@@ -261,6 +261,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
                 f"No se pudo generar la distribución para el pabellón '{nombre_pabellon}'. Omitiendo construcción."
             )
             continue
+        
         print("DISTRUBUICION", distribucion[0])
         container_polygon = obtener_polygon_real_del_piso(distribucion[0], slot_polygon)
         max_nivel = len(distribucion)
