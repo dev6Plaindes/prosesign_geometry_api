@@ -100,15 +100,18 @@ def stage_get_ambientes(ctx: PipelineContext):
         "COCINA PRIM - SEC",
     }
 
-    if not getattr(ctx.request, 'ambientes', None):
-        logger.info("No se recibieron ambientes complementarios del usuario.")
-        return
+    solicitud_ambientes = getattr(ctx.request, 'ambientes', None) or []
+    
+    seleccionados = {
+        normalizar_nombre(amb["ambienteComplementario"]) 
+        for amb in solicitud_ambientes 
+        if "ambienteComplementario" in amb
+    }
 
-    # Selección del usuario normalizada
-    seleccionados = {normalizar_nombre(amb["ambienteComplementario"]) 
-                     for amb in ctx.request.ambientes}
-
-    logger.info(f"Ambientes complementarios seleccionados: {seleccionados}")
+    if not seleccionados:
+        logger.info("No se recibieron ambientes complementarios. Se removerán todos los complementarios.")
+    else:
+        logger.info(f"Ambientes complementarios seleccionados: {seleccionados}")
 
     ambientes_filtrados = []
     eliminados = 0
