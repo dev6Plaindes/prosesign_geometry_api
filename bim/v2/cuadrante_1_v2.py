@@ -4,6 +4,8 @@ import io
 import logging
 
 from bim.pabellones_to_csv import exportar_pabellones_a_csv
+from bim.utils.dividir_sum import ajustar_dividir_sum
+from bim.utils.posicion_puerta import determinar_posicion_puerta
 from bim.v2.procesar_pabellones import _procesar_layout_multiples_pabellones
 from bim.utils import view_ancho_largo_polygon
 from bim.utils.view_ancho_largo_polygon import imprimir_dimensiones_poligono
@@ -172,6 +174,9 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
             mi_modelo=mi_modelo,
             factory_capas=factory_capas,
         )
+        
+        imprimir_dimensiones_poligono(space_centro_2, "AREA MEDIO")
+        
 
     # =========================================================================
     # 4. ASIGNACIÓN FINAL DE PABELLONES A SLOTS
@@ -215,39 +220,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
 
     # Lógica para determinar la orientación de la puerta hacia el centro
     centro_absoluto = space_centro_2.centroid
-
-    def determinar_posicion_puerta(
-        pabellon_polygon, centro_layout, nombre_pabellon, eje_principal_division
-    ):
-        """
-        Determina si la puerta debe estar en el lado 'top' o 'bottom' para que mire hacia el patio central.
-        La lógica asume que los pabellones son más largos que anchos (verticales) y que la función
-        create_structure los rotará 90 grados para trabajar. En esa rotación, el lado derecho (+X)
-        se convierte en el lado superior (+Y, 'top'), y el izquierdo (-X) en el inferior (-Y, 'bottom').
-        """
-        centro_pabellon = pabellon_polygon.centroid
-
-        if eje_principal_division == "x":
-            # Pabellones a izquierda/derecha del centro.
-            # Si el pabellón está a la izquierda del centro, su puerta debe estar en su lado derecho.
-            # Lado derecho (+X) se convierte en 'top'.
-            if centro_pabellon.x < centro_layout.x:
-                return "top"
-            # Si el pabellón está a la derecha del centro, su puerta debe estar en su lado izquierdo.
-            # Lado izquierdo (-X) se convierte en 'bottom'.
-            else:
-                return "bottom"
-        else:  # 'y'
-            # Pabellones arriba/abajo del centro.
-            # Si el pabellón está abajo del centro, su puerta debe estar en su lado superior.
-            # Lado superior (+Y) se convierte en 'top'.
-            if centro_pabellon.y < centro_layout.y:
-                return "top"
-            # Si el pabellón está arriba del centro, su puerta debe estar en su lado inferior.
-            # Lado inferior (-Y) se convierte en 'bottom'.
-            else:
-                return "bottom"
-
+    
     # =========================================================================
     # CONSTRUCCIÓN DE PABELLONES BASADA EN ASIGNACIÓN DINÁMICA
     # =========================================================================
@@ -379,6 +352,8 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
         for row in data_pab_medio
         if "SUM" in row.get("Ambientes", "").upper().replace(" ", "")
     ]
+    
+    
 
     patio_inicial_values = patio_inicial_list[0] if patio_inicial_list else None
     patio_losa_dep_values = patio_losa_dep_list[0] if patio_losa_dep_list else None
@@ -559,21 +534,40 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
             color_hex="#D8D8D8",
             factory_capas=factory_capas,
         )
+        
 
-    if sum_ambiente:
-        create_structure(
-            ensamblaje=mi_modelo,
-            polygon_pabellon=space_sum,  # Parámetro contenedor corregido
-            polygon=sum_ambiente,
-            largos_habitaciones=[sum_salon_usos_mult_val["Largo"]],
-            anchos_habitaciones=[sum_salon_usos_mult_val["Ancho"]],
-            sufijo_nombre="SUM",
-            posicion_puerta="bottom",
-            nivel=1,
-            max_nivel=1,
-            names_ambientes=["Sala de Usos Múltiples"],
-            factory_capas=factory_capas,
-        )
+    # if sum_ambiente:
+    #     sum_polygons = ajustar_dividir_sum(space_sum, sum_ambiente)
+    #     print(sum_polygons)
+    #     for i, poly in enumerate(sum_polygons):
+    #         sufijo = f"SUM_{i+1}" if len(sum_polygons) > 1 else "SUM"
+
+    #         create_structure(
+    #             ensamblaje=mi_modelo,
+    #             polygon_pabellon=space_sum,
+    #             polygon=poly,
+    #             largos_habitaciones=[sum_salon_usos_mult_val["Largo"]],
+    #             anchos_habitaciones=[sum_salon_usos_mult_val["Ancho"]],
+    #             sufijo_nombre=sufijo,
+    #             posicion_puerta="bottom",
+    #             nivel=1,
+    #             max_nivel=1,
+    #             names_ambientes=["Sala de Usos Múltiples"],
+    #             factory_capas=factory_capas,
+    #         )
+    #     # create_structure(
+    #     #     ensamblaje=mi_modelo,
+    #     #     polygon_pabellon=space_sum,  # Parámetro contenedor corregido
+    #     #     polygon=sum_ambiente,
+    #     #     largos_habitaciones=[sum_salon_usos_mult_val["Largo"]],
+    #     #     anchos_habitaciones=[sum_salon_usos_mult_val["Ancho"]],
+    #     #     sufijo_nombre="SUM",
+    #     #     posicion_puerta="bottom",
+    #     #     nivel=1,
+    #     #     max_nivel=1,
+    #     #     names_ambientes=["Sala de Usos Múltiples"],
+    #     #     factory_capas=factory_capas,
+    #     # )
 
     local_glb_filename = f"plane_{id_project}.glb"
     mi_modelo.save(local_glb_filename)

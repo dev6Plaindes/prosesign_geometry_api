@@ -122,6 +122,7 @@ def largos_for_piso_and_ambiente(
 
     return resultado_completo
 
+
 def obtener_polygon_real_del_piso(
     piso_data: List[Dict[str, Any]],
     polygon_parent: Polygon

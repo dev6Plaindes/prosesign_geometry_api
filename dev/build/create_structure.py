@@ -13,6 +13,7 @@ from bim.creations.windows import _generate_windows_by_room
 from bim.utils.algoritm_distibution import calcular_posiciones_columnas, encontrar_largo_equilibrado
 from bim.utils.view_ancho_largo_polygon import imprimir_dimensiones_poligono
 from dev.assemblys.capas import FactoryCapas
+from dev.build.distribucion_ambientes import distribuir_ambientes
 
 def create_structure(
     ensamblaje,
@@ -29,10 +30,49 @@ def create_structure(
     anchos_habitaciones: list = None
 ):
     """
-    Construye UN solo bloque modular de ambientes variables basándose en un Polygon de Shapely.
-    Determina de forma automática el largo (lado mayor), el ancho, y la inclinación espacial.
-    Integra columnas, vigas, muros, puertas, ventanas, escaleras y techos de manera georreferenciada.
+    Construye la estructura 3D de un pabellón a partir de geometría 2D.
+
+    Parameters
+    ----------
+    polygon_pabellon : Polygon
+        Huella general del pabellón. Se utiliza como referencia para la
+        orientación y dimensiones generales. No representa un ambiente.
+
+    polygon : Polygon
+        Área 2D disponible para distribuir uno o varios ambientes. La
+        geometría final de cada ambiente debe obtenerse mediante la división
+        de este polígono.
+
+    largos_habitaciones : list
+        Requerimientos de largo de cada ambiente. El índice `i` corresponde
+        al ambiente `i`.
+
+    anchos_habitaciones : list, optional
+        Requerimientos de ancho de cada ambiente. Mantiene correspondencia
+        por índice con `largos_habitaciones`.
+
+    names_ambientes : list, optional
+        Nombres de los ambientes. Mantiene correspondencia por índice con
+        `largos_habitaciones` y `anchos_habitaciones`.
+
+    Notes
+    -----
+    La geometría 2D resultante de cada ambiente es la fuente de verdad para
+    su representación 3D. El sombreado debe representar exactamente dicha
+    geometría y no reconstruirse independientemente mediante `box(largo,
+    ancho, ...)`.
+
+    Flujo:
+        polygon → división de ambientes → Polygon por ambiente → CadQuery 3D
     """
+    
+    polygons_ambientes = distribuir_ambientes(
+        anchos_habitaciones=anchos_habitaciones,
+        largos_habitaciones=largos_habitaciones,
+        names_ambientes=names_ambientes,
+        polygon=polygon
+    )
+    
     # Imprimir las dimensiones reales de los polígonos de entrada
     imprimir_dimensiones_poligono(polygon_pabellon, f"Pabellon Contenedor '{sufijo_nombre}'")
     imprimir_dimensiones_poligono(polygon, f"Piso Contenedor '{sufijo_nombre}' Nivel {nivel}")
@@ -382,16 +422,43 @@ def create_structure(
     # 11. REGISTRO Y ENSAMBLAJE FINAL DE LOS AMBIENTES E INDIVIDUALES
     # =========================================================================
     # Sombreados de los ambientes internos
-    for geom_amb, nombre_amb in geometrias_ambientes_local:
-        geom_amb_rotada = geom_amb.rotate(pivote_3d, eje_rotacion_z, angulo_grados)        
-        nombre_final_ambiente = f"{nombre_amb} {sufijo_nombre} - Nivel {nivel}"
-        ensamblaje.add(
-            geom_amb_rotada, 
-            name=nombre_final_ambiente,
-            color=cq.Color(0.85, 0.9, 1.0, 0.5) # Azul claro semitransparente
+    for idx, (polygon_ambiente, nombre_ambiente) in enumerate(polygons_ambientes):
+
+        puntos = list(polygon_ambiente.exterior.coords)
+
+        geometria_ambiente = (
+            cq.Workplane("XY")
+            .polyline(puntos)
+            .close()
+            .extrude(alto)
+            .translate((0, 0, desfase_z))
         )
+
+        nombre_final = (
+            f"[{nombre_ambiente} {idx + 1}] {sufijo_nombre} - Nivel {nivel}"
+        )
+        print("SOMBREADO 1:", nombre_final)
+
+        ensamblaje.add(
+            geometria_ambiente,
+            name=nombre_final,
+            color=cq.Color(0.85, 0.9, 1.0, 0.0),
+        )
+        
         if factory_capas:
-            factory_capas.add_in_capa_auto(workplane=geom_amb_rotada, nivel=nivel, name=nombre_final_ambiente)
+            factory_capas.add_in_capa_auto(workplane=geometria_ambiente, nivel=nivel, name=nombre_final)
+
+    # for geom_amb, nombre_amb in geometrias_ambientes_local:
+    #     geom_amb_rotada = geom_amb.rotate(pivote_3d, eje_rotacion_z, angulo_grados)        
+    #     nombre_final_ambiente = f"{nombre_amb} {sufijo_nombre} - Nivel {nivel}"
+    #     print("SOMBREADO 2:",nombre_final_ambiente)
+    #     ensamblaje.add(
+    #         geom_amb_rotada, 
+    #         name=nombre_final_ambiente,
+    #         color=cq.Color(0.85, 0.9, 1.0, 0.5) # Azul claro semitransparente
+    #     )
+    #     if factory_capas:
+    #         factory_capas.add_in_capa_auto(workplane=geom_amb_rotada, nivel=nivel, name=nombre_final_ambiente)
 
     # Muros
     ensamblaje.add(muros_final, name=f"Muros {sufijo_nombre} - Nivel {nivel}", color=cq.Color("#6E6E6E"))
