@@ -1,7 +1,4 @@
 ﻿Pabellón;Ambiente;Cantidad;Ancho (m);Largo (m);Área Unit. (m²);Área Total (m²)
-Medio;SUM;1.0;16.0;10.8;172.5;172.5
-Primaria;Aulas Primaria;6.0;7.5;5.333333333;40.0;240.0
-Secundaria;Aulas Secundaria;5.0;7.5;2.666666667;20.0;100.0
-Inicial;Aulas Ciclo I;2.0;5.3;7.5;40.0;80.0
-Inicial;Aulas Ciclo II;1.0;8.0;7.5;60.0;60.0
-Admin;Direccion Adm.;1.0;2.0;5.0;9.75;9.75
+Primaria;Aulas Primaria;12.0;7.5;8.0;60.0;720.0
+Secundaria;Aulas Secundaria;5.0;7.5;10.66666667;80.0;400.0
+Admin;Direccion Adm.;1.0;5.0;1.3;6.5;6.5

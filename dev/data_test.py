@@ -271,48 +271,181 @@
 #     "user_id": 7,
 # }
 
-data_test = {
-    "name": "PRUEBA",
+# data_test = {
+#     "name": "PRUEBA",
+#     "tipologia": "Educación",
+#     "zone": "Urbano",
+#     "tipo": "UNIDOCENTE",
+#     "number_floors": "1",
+#     "departamento": "PIURA",
+#     "provincia": "HUANCABAMBA",
+#     "distrito": "CANCHAQUE",
+#     "responsable": "JOSE MA",
+#     "cliente": "SCSCSC",
+#     "width": 62.31046294386033,
+#     "height": 16.323936188593507,
+#     "vertices_rectangle": [
+#         [
+#             299425.36743488855,
+#             8945590.169950876
+#         ],
+#         [
+#             299484.7939796071,
+#             8945608.907068454
+#         ],
+#         [
+#             299479.8852773245,
+#             8945624.475483099
+#         ],
+#         [
+#             299420.4587326059,
+#             8945605.738365522
+#         ]
+#     ],
+#     "angle": 17.5,
+#     "excluded_vertices": [],
+#     "aforo": [
+#         {
+#             "grado": "INICIAL",
+#             "aforo_por_grado": 30,
+#             "cantidad_aulas": 3,
+#             "capacidad_x_aula": 20,
+#             "aulas": {
+#                 "aula_ciclo_i": 30,
+#                 "aula_ciclo_ii": 20
+#             }
+#         },
+#         {
+#             "grado": "PRIMARIA",
+#             "aforo_por_grado": 60,
+#             "cantidad_aulas": 12,
+#             "capacidad_x_aula": 30,
+#             "aulas": {
+#                 "aula_1_prim": 60,
+#                 "aula_2_prim": 60,
+#                 "aula_3_prim": 60,
+#                 "aula_4_prim": 60,
+#                 "aula_5_prim": 60,
+#                 "aula_6_prim": 60
+#             }
+#         },
+#         {
+#             "grado": "SECUNDARIA",
+#             "aforo_por_grado": 35,
+#             "cantidad_aulas": 5,
+#             "capacidad_x_aula": 40,
+#             "aulas": {
+#                 "aula_1_sec": 35,
+#                 "aula_2_sec": 35,
+#                 "aula_3_sec": 35,
+#                 "aula_4_sec": 35,
+#                 "aula_5_sec": 35
+#             }
+#         }
+#     ],
+#     "vertices": [
+#         {
+#             "vertice": "V1",
+#             "x": 299489.52,
+#             "y": 8945625.17
+#         },
+#         {
+#             "vertice": "V2",
+#             "x": 299489.49,
+#             "y": 8945610.76
+#         },
+#         {
+#             "vertice": "V3",
+#             "x": 299457.48,
+#             "y": 8945597.96
+#         },
+#         {
+#             "vertice": "V4",
+#             "x": 299455.2,
+#             "y": 8945582.46
+#         },
+#         {
+#             "vertice": "V5",
+#             "x": 299424.9,
+#             "y": 8945589.77
+#         },
+#         {
+#             "vertice": "V6",
+#             "x": 299413.2,
+#             "y": 8945595.47
+#         },
+#         {
+#             "vertice": "V7",
+#             "x": 299426.04,
+#             "y": 8945613.77
+#         },
+#         {
+#             "vertice": "V8",
+#             "x": 299435.99,
+#             "y": 8945623.62
+#         },
+#         {
+#             "vertice": "V9",
+#             "x": 299460.67,
+#             "y": 8945623.23
+#         }
+#     ],
+#     "ambientes": [
+#         {
+#             "ambienteComplementario": "Dirección administrativa",
+#             "capacidad": 0
+#         },
+#         {
+#             "ambienteComplementario": "Sala de Usos Múltiples (SUM)",
+#             "capacidad": 0
+#         }
+#     ],
+#     "user_id": 7
+# }
+
+# last ambiente
+data_test ={
+    "name": "NUEVO",
     "tipologia": "Educación",
     "zone": "Urbano",
     "tipo": "UNIDOCENTE",
     "number_floors": "1",
-    "departamento": "PIURA",
-    "provincia": "HUANCABAMBA",
-    "distrito": "CANCHAQUE",
-    "responsable": "JOSE MA",
-    "cliente": "SCSCSC",
-    "width": 62.31046294386033,
-    "height": 16.323936188593507,
+    "departamento": "LAMBAYEQUE",
+    "provincia": "CHICLAYO",
+    "distrito": "",
+    "responsable": "JOSE MANUEL",
+    "cliente": "EMPRESA SAC",
+    "width": 48.2346073333174,
+    "height": 46.3382836378878,
     "vertices_rectangle": [
         [
-            299425.36743488855,
-            8945590.169950876
+            8674546.140202451,
+            274938.12894018856
         ],
         [
-            299484.7939796071,
-            8945608.907068454
+            8674541.936279424,
+            274986.1800002785
         ],
         [
-            299479.8852773245,
-            8945624.475483099
+            8674495.774326945,
+            274982.1413527504
         ],
         [
-            299420.4587326059,
-            8945605.738365522
+            8674499.978249973,
+            274934.0902926604
         ]
     ],
-    "angle": 17.5,
+    "angle": 95,
     "excluded_vertices": [],
     "aforo": [
         {
             "grado": "INICIAL",
-            "aforo_por_grado": 30,
-            "cantidad_aulas": 3,
-            "capacidad_x_aula": 20,
+            "aforo_por_grado": 0,
+            "cantidad_aulas": 0,
+            "capacidad_x_aula": 0,
             "aulas": {
-                "aula_ciclo_i": 30,
-                "aula_ciclo_ii": 20
+                "aula_ciclo_i": 0,
+                "aula_ciclo_ii": 0
             }
         },
         {
@@ -346,59 +479,51 @@ data_test = {
     "vertices": [
         {
             "vertice": "V1",
-            "x": 299489.52,
-            "y": 8945625.17
+            "x": 8674546.9657,
+            "y": 274987.9327
         },
         {
             "vertice": "V2",
-            "x": 299489.49,
-            "y": 8945610.76
+            "x": 8674510.1013,
+            "y": 274984.7675
         },
         {
             "vertice": "V3",
-            "x": 299457.48,
-            "y": 8945597.96
+            "x": 8674510.2168,
+            "y": 274983.4224
         },
         {
             "vertice": "V4",
-            "x": 299455.2,
-            "y": 8945582.46
+            "x": 8674495.7201,
+            "y": 274982.1777
         },
         {
             "vertice": "V5",
-            "x": 299424.9,
-            "y": 8945589.77
+            "x": 8674499.8605,
+            "y": 274933.9552
         },
         {
             "vertice": "V6",
-            "x": 299413.2,
-            "y": 8945595.47
+            "x": 8674546.1827,
+            "y": 274938.1041
         },
         {
             "vertice": "V7",
-            "x": 299426.04,
-            "y": 8945613.77
+            "x": 8674546.0954,
+            "y": 274962.4147
         },
         {
             "vertice": "V8",
-            "x": 299435.99,
-            "y": 8945623.62
-        },
-        {
-            "vertice": "V9",
-            "x": 299460.67,
-            "y": 8945623.23
+            "x": 8674549.1342,
+            "y": 274962.6756
         }
     ],
     "ambientes": [
         {
             "ambienteComplementario": "Dirección administrativa",
             "capacidad": 0
-        },
-        {
-            "ambienteComplementario": "Sala de Usos Múltiples (SUM)",
-            "capacidad": 0
         }
+
     ],
     "user_id": 7
 }

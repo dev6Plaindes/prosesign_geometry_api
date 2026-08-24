@@ -352,8 +352,6 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
         for row in data_pab_medio
         if "SUM" in row.get("Ambientes", "").upper().replace(" ", "")
     ]
-    
-    
 
     patio_inicial_values = patio_inicial_list[0] if patio_inicial_list else None
     patio_losa_dep_values = patio_losa_dep_list[0] if patio_losa_dep_list else None
@@ -508,8 +506,9 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
                 or space_sum
             )
 
-        print("LARGO SUM", sum_salon_usos_mult_val["Largo"])
-        print("ANCHO SUM", sum_salon_usos_mult_val["Ancho"])
+        if sum_salon_usos_mult_val:
+            print("LARGO SUM", sum_salon_usos_mult_val.get("Largo"))
+            print("ANCHO SUM", sum_salon_usos_mult_val.get("Ancho"))
 
     # =========================================================================
     # RENDERIZADO DE BLOQUES DEL CENTRO
@@ -534,7 +533,6 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
             color_hex="#D8D8D8",
             factory_capas=factory_capas,
         )
-        
 
     # if sum_ambiente:
     #     sum_polygons = ajustar_dividir_sum(space_sum, sum_ambiente)
