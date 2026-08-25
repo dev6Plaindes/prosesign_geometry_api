@@ -244,6 +244,20 @@ ESTILOS = {
         "fill_color": "orange",
         "legend": True,  # ¡Importante para que aparezca en la leyenda!
     },
+    "SSHH - Hombres": {
+        "line_color": "lightblue",  # O el color que prefieras para la losa
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "lightblue",
+        "legend": True,
+    },
+    "SSHH - Mujeres": {
+            "line_color": "pink",  # O el color que prefieras para la losa
+            "line_width": 1,
+            "dash": None,
+            "fill_color": "pink",
+            "legend": True,
+        },
     # NUEVOS
     "AUDITORIO MULTIUSOS": {
         "line_color": "darkorange",

@@ -6,6 +6,7 @@ import logging
 from bim.pabellones_to_csv import exportar_pabellones_a_csv
 from bim.utils.dividir_sum import ajustar_dividir_sum
 from bim.utils.posicion_puerta import determinar_posicion_puerta
+from bim.v2.add_banios import agregar_banos
 from bim.v2.procesar_pabellones import _procesar_layout_multiples_pabellones
 from bim.utils import view_ancho_largo_polygon
 from bim.utils.view_ancho_largo_polygon import imprimir_dimensiones_poligono
@@ -91,6 +92,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
     # 1. IDENTIFICACIÓN PREVIA DE PABELLONES ACTIVOS
     # =========================================================================
     pabellones = agrupar_ambientes_por_pabellon(ambientes)
+    print("PABELLONES", pabellones)
     exportar_pabellones_a_csv(pabellones)
 
     data_pab_medio: list[DataAmbientes] = pabellones.get("medio", [])
@@ -174,9 +176,8 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
             mi_modelo=mi_modelo,
             factory_capas=factory_capas,
         )
-        
+
         imprimir_dimensiones_poligono(space_centro_2, "AREA MEDIO")
-        
 
     # =========================================================================
     # 4. ASIGNACIÓN FINAL DE PABELLONES A SLOTS
@@ -220,7 +221,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
 
     # Lógica para determinar la orientación de la puerta hacia el centro
     centro_absoluto = space_centro_2.centroid
-    
+
     # =========================================================================
     # CONSTRUCCIÓN DE PABELLONES BASADA EN ASIGNACIÓN DINÁMICA
     # =========================================================================
@@ -247,12 +248,15 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
         pos_puerta = determinar_posicion_puerta(
             slot_polygon, centro_absoluto, nombre_pabellon, eje_secundario
         )
-
         distribucion = largos_for_piso_and_ambiente(
             data=data_pabellon,
             polygon=slot_polygon,
             name_pabellon=nombre_pabellon.capitalize(),
         )
+        print("DISTRIBUICION", distribucion)
+        new_distribucion= agregar_banos(distribucion)
+        
+        print("NUEVA DISTRIBUICION", new_distribucion)
 
         distribuciones_finales[nombre_pabellon] = distribucion
 
@@ -261,7 +265,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
                 f"No se pudo generar la distribución para el pabellón '{nombre_pabellon}'. Omitiendo construcción."
             )
             continue
-        
+
         print("DISTRUBUICION", distribucion[0])
         container_polygon = obtener_polygon_real_del_piso(distribucion[0], slot_polygon)
         max_nivel = len(distribucion)
@@ -534,6 +538,31 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
             color_hex="#D8D8D8",
             factory_capas=factory_capas,
         )
+
+    if sum_ambiente:
+        print("CREANDO SUM")
+        new_block(
+            polygon=sum_ambiente,
+            alto_z=0.3,
+            assembly=mi_modelo,
+            nombre=f"SUM 1",
+            color_hex="#D8D8D8",
+            factory_capas=factory_capas,
+        )
+
+        create_structure(
+                ensamblaje=mi_modelo,
+                polygon_pabellon=space_sum,
+                polygon=sum_ambiente,
+                largos_habitaciones=[sum_salon_usos_mult_val["Largo"]],
+                anchos_habitaciones=[sum_salon_usos_mult_val["Ancho"]],
+                sufijo_nombre="SUM",
+                posicion_puerta="bottom",
+                nivel=1,
+                max_nivel=1,
+                names_ambientes=["Sala de Usos Múltiples"],
+                factory_capas=factory_capas,
+            )
 
     # if sum_ambiente:
     #     sum_polygons = ajustar_dividir_sum(space_sum, sum_ambiente)

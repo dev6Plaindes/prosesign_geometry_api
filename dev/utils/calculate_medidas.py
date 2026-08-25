@@ -32,36 +32,33 @@ def _get_main_axis_angle(polygon: Polygon) -> float:
     angle_rad = math.atan2(p2[1] - p1[1], p2[0] - p1[0])
     return math.degrees(angle_rad)
 
+from itertools import groupby
+from typing import Any, Dict, List
+from shapely import affinity
+from shapely.geometry import Polygon, box
 
 def largos_for_piso_and_ambiente(
     data: List[Dict[str, Any]],
     polygon: Polygon,
     name_pabellon: str,
-    min_floors: int = 1
+    min_floors: int = 1,
 ) -> List[List[Dict[str, Any]]]:
     """
     Calcula la distribución de ambientes a lo largo del lado más grande de un Polygon,
-    centrando el conjunto de ambientes tanto horizontal como verticalmente dentro del
-    polígono contenedor. Genera la huella física (Polygon de Shapely) para cada
-    ambiente individual ya en su posición final y orientada correctamente.
+    agregando automáticamente los baños de Hombres y Mujeres al final de cada piso y
+    centrando el conjunto de ambientes horizontal y verticalmente.
     """
     # 1. ANÁLISIS DE GEOMETRÍA Y ORIENTACIÓN DEL POLÍGONO PADRE
-    # Se usa el rectángulo delimitador mínimo para obtener el ángulo del eje principal real.
     angulo_grados = _get_main_axis_angle(polygon)
-
-    # El pivote para la rotación es el centroide del polígono original.
     pivote = polygon.centroid
 
-    # Se alinea el polígono a 0 grados para trabajar en un sistema de coordenadas cartesiano.
+    # Alineación del polígono a 0 grados
     poly_alineado = affinity.rotate(polygon, -angulo_grados, origin=pivote)
-
-    # Se obtienen las dimensiones reales del área de trabajo alineada.
     min_x, min_y, max_x, max_y = poly_alineado.bounds
     largo_total = max_x - min_x
     ancho_total = max_y - min_y
 
-    # 2. DISTRIBUCIÓN LÓGICA DE AMBIENTES (ALGORITMO DE EMPAQUETADO)
-    # Se distribuyen los ambientes a lo largo de la dimensión más larga disponible.
+    # 2. DISTRIBUCIÓN LÓGICA DE AMBIENTES
     pabellon_p = auto_distribution_ambientes_y(data, largo_total, min_floors=min_floors)
 
     if isinstance(pabellon_p, str):
@@ -73,55 +70,75 @@ def largos_for_piso_and_ambiente(
     # 3. GENERACIÓN Y POSICIONAMIENTO DE GEOMETRÍAS POR PISO
     resultado_completo = []
 
-    # Se agrupan los ambientes por el piso asignado por el algoritmo.
-    for clave, grupo in groupby(pabellon_p, key=lambda x: x['Piso']):
+    for clave, grupo in groupby(pabellon_p, key=lambda x: x["Piso"]):
         grupo_lista = list(grupo)
-        piso_data = []
-
-        # Se calcula el largo total que ocuparán los ambientes de este piso.
-        largos_ambientes_piso = [item['Largo_Individual'] for item in grupo_lista]
-        largo_total_piso = sum(largos_ambientes_piso)
-
-        # CÁLCULO DE CENTRADO HORIZONTAL: Se calcula el margen para centrar el bloque de ambientes.
+        
+        # Inyectar las definiciones de los baños al final de la lista del piso actual
+        banos = [
+            {
+                "Ambiente": f"SSHH - Hombres {name_pabellon}",
+                "Largo_Individual": 2.0,
+                "Ancho_Individual": 7.5,
+                "Piso": clave
+            },
+            {
+                "Ambiente": f"SSHH - Mujeres {name_pabellon}",
+                "Largo_Individual": 2.1,
+                "Ancho_Individual": 7.5,
+                "Piso": clave
+            }
+        ]
+        
+        # Lista unificada del piso (Aulas + Baños al final)
+        ambientes_piso = grupo_lista + banos
+        
+        # CÁLCULO DE ESPACIO TOTAL Y CENTRADO HORIZONTAL (Incluyendo baños)
+        largo_total_piso = sum(item["Largo_Individual"] for item in ambientes_piso)
         offset_x_centrado = (largo_total - largo_total_piso) / 2
 
-        # El cursor para dibujar arranca en el borde izquierdo del área alineada más el margen de centrado.
         coordenada_actual_x = min_x + offset_x_centrado
+        piso_data = []
 
-        for item in grupo_lista:
-            largo_ambiente = item['Largo_Individual']
-            ancho_ambiente = item['Ancho_Individual']
+        # Dibujar todos los ambientes del piso en orden
+        for item in ambientes_piso:
+            largo_ambiente = item["Largo_Individual"]
+            ancho_ambiente = item["Ancho_Individual"]
 
-            # CÁLCULO DE CENTRADO VERTICAL: Se calcula el margen para centrar cada ambiente en el ancho.
+            # Centrado vertical individual según el ancho
             offset_y_centrado = (ancho_total - ancho_ambiente) / 2
 
-            # Coordenadas del ambiente individual dentro del espacio alineado.
+            # Coordenadas alineadas
             y_inicio_ambiente = min_y + offset_y_centrado
             x_fin_ambiente = coordenada_actual_x + largo_ambiente
             y_fin_ambiente = y_inicio_ambiente + ancho_ambiente
 
-            # Se crea la caja (Polygon) del ambiente en el espacio de trabajo alineado.
-            caja_ambiente_alineada = box(coordenada_actual_x, y_inicio_ambiente, x_fin_ambiente, y_fin_ambiente)
+            # Creación de la caja (Polygon)
+            caja_ambiente_alineada = box(
+                coordenada_actual_x, y_inicio_ambiente, x_fin_ambiente, y_fin_ambiente
+            )
 
-            # Se rota la caja del ambiente de vuelta a la orientación original del terreno.
-            caja_ambiente_rotada = affinity.rotate(caja_ambiente_alineada, angulo_grados, origin=pivote)
+            # Rotación de vuelta a la orientación original del terreno
+            caja_ambiente_rotada = affinity.rotate(
+                caja_ambiente_alineada, angulo_grados, origin=pivote
+            )
 
-            piso_data.append({
-                "ambiente": item['Ambiente'],
-                "largo": round(largo_ambiente, 2),
-                "ancho": round(ancho_ambiente, 2),
-                "pabellon": name_pabellon,
-                "piso": item['Piso'],
-                "polygon": caja_ambiente_rotada  # Se guarda el polígono final, ya posicionado.
-            })
+            piso_data.append(
+                {
+                    "ambiente": item["Ambiente"],
+                    "largo": round(largo_ambiente, 2),
+                    "ancho": round(ancho_ambiente, 2),
+                    "pabellon": name_pabellon,
+                    "piso": item["Piso"],
+                    "polygon": caja_ambiente_rotada,
+                }
+            )
 
-            # Se avanza el cursor para el siguiente ambiente.
+            # Avanzar el cursor para el siguiente ambiente o baño
             coordenada_actual_x = x_fin_ambiente
 
         resultado_completo.append(piso_data)
 
     return resultado_completo
-
 
 def obtener_polygon_real_del_piso(
     piso_data: List[Dict[str, Any]],

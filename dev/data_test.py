@@ -465,7 +465,7 @@ data_test ={
         {
             "grado": "SECUNDARIA",
             "aforo_por_grado": 35,
-            "cantidad_aulas": 5,
+            "cantidad_aulas": 10,
             "capacidad_x_aula": 40,
             "aulas": {
                 "aula_1_sec": 35,
@@ -522,8 +522,11 @@ data_test ={
         {
             "ambienteComplementario": "Dirección administrativa",
             "capacidad": 0
+        },
+        {
+            "ambienteComplementario": "Sala de Usos Múltiples (SUM)",
+            "capacidad": 0
         }
-
     ],
     "user_id": 7
 }

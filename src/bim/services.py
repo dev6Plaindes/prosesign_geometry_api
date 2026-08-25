@@ -39,12 +39,13 @@ def service_generate_project(request_data : ProjectRequest) -> ResponseGenerateP
     #     id_parent_project= id_new_project,
     #     id_version_project=id_new_v_project
     # )
+    
     job = q.enqueue(
         generate_project_school_pipeline, 
         request_data, 
         id_new_project,
         id_new_v_project,
-        job_timeout=160
+        job_timeout=300
     )
 
     update_status_job_project(
