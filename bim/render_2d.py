@@ -245,10 +245,10 @@ ESTILOS = {
         "legend": True,  # ¡Importante para que aparezca en la leyenda!
     },
     "SSHH - Hombres": {
-        "line_color": "lightblue",  # O el color que prefieras para la losa
+        "line_color": "blue",  # O el color que prefieras para la losa
         "line_width": 1,
         "dash": None,
-        "fill_color": "blue",
+        "fill_color": "lightblue",
         "legend": True,
     },
     "SSHH - Mujeres": {
