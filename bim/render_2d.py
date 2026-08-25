@@ -248,7 +248,7 @@ ESTILOS = {
         "line_color": "lightblue",  # O el color que prefieras para la losa
         "line_width": 1,
         "dash": None,
-        "fill_color": "lightblue",
+        "fill_color": "blue",
         "legend": True,
     },
     "SSHH - Mujeres": {
