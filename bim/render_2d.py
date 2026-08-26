@@ -252,12 +252,12 @@ ESTILOS = {
         "legend": True,
     },
     "SSHH - Mujeres": {
-            "line_color": "pink",  # O el color que prefieras para la losa
-            "line_width": 1,
-            "dash": None,
-            "fill_color": "pink",
-            "legend": True,
-        },
+        "line_color": "pink",  # O el color que prefieras para la losa
+        "line_width": 1,
+        "dash": None,
+        "fill_color": "pink",
+        "legend": True,
+    },
     # NUEVOS
     "AUDITORIO MULTIUSOS": {
         "line_color": "darkorange",
