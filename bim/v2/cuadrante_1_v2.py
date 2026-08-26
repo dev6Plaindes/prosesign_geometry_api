@@ -253,10 +253,8 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
             polygon=slot_polygon,
             name_pabellon=nombre_pabellon.capitalize(),
         )
-        print("DISTRIBUICION", distribucion)
-        new_distribucion= agregar_banos(distribucion)
         
-        print("NUEVA DISTRIBUICION", new_distribucion)
+        
 
         distribuciones_finales[nombre_pabellon] = distribucion
 
@@ -310,6 +308,14 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
             imprimir_dimensiones_poligono(
                 container_polygon, f"PISO MEDIDA {nivel_actual}"
             )
+            # new_block(
+            #     polygon=slot_polygon,
+            #     alto_z=0.3,
+            #     assembly=mi_modelo,
+            #     nombre=nombre_pabellon,
+            #     color_hex="#D8D8D8",
+            #     factory_capas=factory_capas,
+            # )
 
             create_structure(
                 ensamblaje=mi_modelo,
@@ -500,12 +506,21 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
                 _, losa_deportiva, _ = tramos_losa
             else:
                 losa_deportiva = centro_3  # Fallback
+                
+        # refactor sum
+        
+        if sum_salon_usos_mult_val["Largo"] > 10:
+            valid_sum_2 = True
+            prueba_largo_sum = round(sum_salon_usos_mult_val["Largo"] / 2, 2)
+        else:
+            valid_sum_2 = False
+            prueba_largo_sum = sum_salon_usos_mult_val["Largo"]
 
         if sum_salon_usos_mult_val and space_sum:
             sum_ambiente = (
                 obtener_sub_polygon_centrado(
                     space_sum,
-                    sum_salon_usos_mult_val["Largo"],
+                    prueba_largo_sum,
                     sum_salon_usos_mult_val["Ancho"],
                 )
                 or space_sum
@@ -514,6 +529,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
         if sum_salon_usos_mult_val:
             print("LARGO SUM", sum_salon_usos_mult_val.get("Largo"))
             print("ANCHO SUM", sum_salon_usos_mult_val.get("Ancho"))
+            imprimir_dimensiones_poligono(sum_ambiente, "MEDIDAS SUM")
 
     # =========================================================================
     # RENDERIZADO DE BLOQUES DEL CENTRO
@@ -541,20 +557,59 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
 
     if sum_ambiente:
         print("CREANDO SUM")
-        new_block(
-            polygon=sum_ambiente,
-            alto_z=0.3,
-            assembly=mi_modelo,
-            nombre=f"SUM 1",
-            color_hex="#D8D8D8",
-            factory_capas=factory_capas,
-        )
-
-        create_structure(
+        # new_block(
+        #     polygon=sum_ambiente,
+        #     alto_z=0.3,
+        #     assembly=mi_modelo,
+        #     nombre=f"SUM 1",
+        #     color_hex="#D8D8D8",
+        #     factory_capas=factory_capas,
+        # )
+        
+        if valid_sum_2:
+            create_structure(
                 ensamblaje=mi_modelo,
-                polygon_pabellon=space_sum,
+                polygon_pabellon=sum_ambiente,
                 polygon=sum_ambiente,
-                largos_habitaciones=[sum_salon_usos_mult_val["Largo"]],
+                largos_habitaciones=[prueba_largo_sum],
+                anchos_habitaciones=[sum_salon_usos_mult_val["Ancho"]],
+                sufijo_nombre="SUM",
+                posicion_puerta="bottom",
+                nivel=1,
+                max_nivel=2,
+                names_ambientes=["Sala de Usos Múltiples"],
+                factory_capas=factory_capas,
+            )
+            create_structure(
+                ensamblaje=mi_modelo,
+                polygon_pabellon=sum_ambiente,
+                polygon=sum_ambiente,
+                largos_habitaciones=[prueba_largo_sum],
+                anchos_habitaciones=[sum_salon_usos_mult_val["Ancho"]],
+                sufijo_nombre="SUM 2",
+                posicion_puerta="bottom",
+                nivel=2,
+                max_nivel=2,
+                names_ambientes=["Sala de Usos Múltiples"],
+                factory_capas=factory_capas,
+            )
+            
+            create_balcony(
+                ensamblaje=mi_modelo,
+                polygon=sum_ambiente,
+                polygon_pabellon=sum_ambiente,
+                sufijo_nombre="SUM",
+                posicion_puerta="bottom",
+                nivel=2,
+                ancho_balcon=1.8,
+                factory_capas=factory_capas,
+            )
+        else:
+            create_structure(
+                ensamblaje=mi_modelo,
+                polygon_pabellon=sum_ambiente,
+                polygon=sum_ambiente,
+                largos_habitaciones=[prueba_largo_sum],
                 anchos_habitaciones=[sum_salon_usos_mult_val["Ancho"]],
                 sufijo_nombre="SUM",
                 posicion_puerta="bottom",
@@ -563,6 +618,7 @@ def cuadrante_1_v2(vertices_terreno, vertices_cuadrante, ambientes, id_project: 
                 names_ambientes=["Sala de Usos Múltiples"],
                 factory_capas=factory_capas,
             )
+            
 
     # if sum_ambiente:
     #     sum_polygons = ajustar_dividir_sum(space_sum, sum_ambiente)

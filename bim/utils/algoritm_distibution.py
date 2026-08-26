@@ -28,7 +28,7 @@ def auto_distribution_ambientes_y(data_ambientes, largo_cuadrante, min_floors=1)
  
     # MEDIDAS
     largo_escalera = 2.4
-    largo_banios = 0
+    largo_banios = 4
 
     espacio_escalera_banio = largo_escalera + largo_banios
 

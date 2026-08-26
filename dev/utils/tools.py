@@ -325,68 +325,68 @@ def obtener_sub_polygon_centrado(
     polygon: Polygon, largo: float, ancho: float
 ) -> Optional[Polygon]:
     """
-    Crea un sub-polígono con un largo y ancho específicos, centrado tanto
-    horizontal como verticalmente dentro del polígono contenedor (incluso si está inclinado).
-
-    Parámetros:
-        - polygon: Objeto Polygon de Shapely contenedor (puede estar rotado).
-        - largo: Longitud del nuevo polígono (en el eje X del polígono alineado).
-        - ancho: Ancho del nuevo polígono (en el eje Y del polígono alineado).
-
-    Retorna:
-        - Polygon: El sub-polígono perfectamente centrado y orientado, o None si no cabe.
+    Crea un sub-polígono con un largo y ancho específicos, centrado
+    dentro del polígono contenedor (soporta orientaciones arbitrarias).
     """
-    # =========================================================================
-    # 1. DETECTAR ÁNGULO DE INCLINACIÓN
-    # =========================================================================
-    coords = list(polygon.exterior.coords)
-    p0, p1 = coords[0], coords[1]
+    if not polygon or polygon.is_empty:
+        return None
 
+    # =========================================================================
+    # 1. OBTENER RECTÁNGULO CONTENEDOR MÍNIMO Y SU ÁNGULO REAL
+    # =========================================================================
+    # minimum_rotated_rectangle calcula el Bounding Box Orientado (OBB) exacto
+    mrr = polygon.minimum_rotated_rectangle
+    mrr_coords = list(mrr.exterior.coords)
+
+    # Obtenemos el vector del lado más largo o principal del OBB
+    p0, p1 = mrr_coords[0], mrr_coords[1]
     angulo_rad = math.atan2(p1[1] - p0[1], p1[0] - p0[0])
     angulo_grados = math.degrees(angulo_rad)
 
-    if angulo_grados > 90:
-        angulo_grados -= 180
-    elif angulo_grados < -90:
-        angulo_grados += 180
-
     # =========================================================================
-    # 2. ALINEAR TEMPORALMENTE EL POLÍGONO A 0°
+    # 2. ALINEAR TEMPORALMENTE EL POLÍGONO CON SU CENTROIDE
     # =========================================================================
-    pivote = polygon.centroid
-    poly_alineado = affinity.rotate(polygon, -angulo_grados, origin=pivote)
+    centroide = polygon.centroid
+    poly_alineado = affinity.rotate(polygon, -angulo_grados, origin=centroide)
 
-    # Obtenemos los límites y dimensiones del polígono contenedor alineado
+    # Medimos el marco real alineado
     min_x, min_y, max_x, max_y = poly_alineado.bounds
     largo_contenedor = max_x - min_x
     ancho_contenedor = max_y - min_y
 
-    # Validamos que el sub-polígono quepa en el contenedor
-    if largo > largo_contenedor or ancho > ancho_contenedor:
-        print(
-            "⚠️ Advertencia: Las dimensiones solicitadas superan el tamaño del polígono contenedor."
-        )
+    # Si las dimensiones solicitadas quedan invertidas respecto al eje alineado,
+    # verificamos ambas combinaciones (Largo x Ancho) o (Ancho x Largo)
+    fit_directo = (largo <= largo_contenedor) and (ancho <= ancho_contenedor)
+    fit_invertido = (ancho <= largo_contenedor) and (largo <= ancho_contenedor)
+
+    if not (fit_directo or fit_invertido):
+        print("⚠️ Advertencia: Las dimensiones solicitadas superan el tamaño del polígono contenedor.")
         return None
 
-    # =========================================================================
-    # 3. CALCULAR CENTRO Y NUEVAS COORDENADAS PLANAS
-    # =========================================================================
-    # Encontramos el centro geométrico del contenedor alineado
-    centro_x = (min_x + max_x) / 2
-    centro_y = (min_y + max_y) / 2
-
-    # Calculamos los límites de la nueva caja centrada
-    sub_min_x = centro_x - (largo / 2)
-    sub_max_x = centro_x + (largo / 2)
-    sub_min_y = centro_y - (ancho / 2)
-    sub_max_y = centro_y + (ancho / 2)
-
-    # Creamos el box alineado
-    sub_box_alineado = box(sub_min_x, sub_min_y, sub_max_x, sub_max_y)
+    # Ajustar orientación si encaja mejor de forma invertida
+    if not fit_directo and fit_invertido:
+        largo, ancho = ancho, largo
 
     # =========================================================================
-    # 4. ROTAR DE VUELTA AL ÁNGULO ORIGINAL
+    # 3. CREAR CAJA CENTRADA EN EL CENTROIDE
     # =========================================================================
-    sub_polygon_final = affinity.rotate(sub_box_alineado, angulo_grados, origin=pivote)
+    cx, cy = centroide.x, centroide.y
+    sub_box_alineado = box(
+        cx - (largo / 2.0),
+        cy - (ancho / 2.0),
+        cx + (largo / 2.0),
+        cy + (ancho / 2.0)
+    )
+
+    # =========================================================================
+    # 4. ROTAR DE VUELTA Y VALIDAR CONTENCIÓN FÍSICA
+    # =========================================================================
+    sub_polygon_final = affinity.rotate(sub_box_alineado, angulo_grados, origin=centroide)
+
+    # Validación topológica final: garantiza que no sobresalga en polígonos irregulares
+    if not polygon.buffer(1e-6).contains(sub_polygon_final):
+        print("⚠️ Advertencia: El sub-polígono centrado sobresale de los límites reales del contenedor.")
+        return None
 
     return sub_polygon_final
+
